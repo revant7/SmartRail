@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Upload Photos - QRAIL{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Header -->
+        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="fas fa-camera"></i> Upload Photos
+            </h1>
+            <a href="{% url 'inspections:inspection_detail' inspection.inspection_id %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Inspection
+            </a>
+        </div>
+
+        <!-- Upload Form -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Upload Multiple Photos</h6>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="photoUploadForm">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.photos.id_for_label }}" class="form-label">Photos</label>
+                        {{ form.photos }}
+                        {% if form.photos.errors %}
+                            <div class="text-danger">{{ form.photos.errors }}</div>
+                        {% endif %}
+                        <div class="form-text">Select multiple photos to upload. Maximum 10MB per photo.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.photo_type.id_for_label }}" class="form-label">Photo Type</label>
+                        {{ form.photo_type }}
+                        {% if form.photo_type.errors %}
+                            <div class="text-danger">{{ form.photo_type.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.caption.id_for_label }}" class="form-label">Caption (Optional)</label>
+                        {{ form.caption }}
+                        {% if form.caption.errors %}
+                            <div class="text-danger">{{ form.caption.errors }}</div>
+                        {% endif %}
+                        <div class="form-text">This caption will be applied to all uploaded photos.</div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-primary" id="uploadBtn">
+                            <i class="fas fa-upload"></i> Upload Photos
+                        </button>
+                        <a href="{% url 'inspections:inspection_detail' inspection.inspection_id %}" class="btn btn-secondary">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Single Photo Upload -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Upload Single Photo</h6>
+            </div>
+            <div class="card-body">
+                <form id="singlePhotoForm" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="singlePhoto" class="form-label">Photo</label>
+                                <input type="file" class="form-control" id="singlePhoto" accept="image/*" required>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="singlePhotoType" class="form-label">Type</label>
+                                <select class="form-control" id="singlePhotoType">
+                                    {% for value, label in form.photo_type.field.choices %}
+                                    <option value="{{ value }}">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="singleCaption" class="form-label">Caption</label>
+                                <input type="text" class="form-control" id="singleCaption" placeholder="Optional">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="mb-3">
+                                <label class="form-label">&nbsp;</label>
+                                <button type="button" class="btn btn-primary d-block w-100" onclick="uploadSinglePhoto()">
+                                    <i class="fas fa-upload"></i> Upload
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Current Photos -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Current Photos</h6>
+            </div>
+            <div class="card-body">
+                <div id="photosContainer" class="row">
+                    <!-- Photos will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Load current photos
+function loadPhotos() {
+    fetch(`/inspections/api/{{ inspection.inspection_id }}/data/`)
+        .then(response => response.json())
+        .then(data => {
+            // This would need to be implemented to get photos data
+            console.log('Inspection data loaded:', data);
+        })
+        .catch(error => {
+            console.error('Error loading photos:', error);
+        });
+}
+
+// Upload single photo via AJAX
+function uploadSinglePhoto() {
+    const formData = new FormData();
+    const photo = document.getElementById('singlePhoto').files[0];
+    const photoType = document.getElementById('singlePhotoType').value;
+    const caption = document.getElementById('singleCaption').value;
+    
+    if (!photo) {
+        alert('Please select a photo to upload.');
+        return;
+    }
+    
+    formData.append('photo', photo);
+    formData.append('photo_type', photoType);
+    formData.append('caption', caption);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    const uploadBtn = document.querySelector('#singlePhotoForm button');
+    uploadBtn.disabled = true;
+    uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+    
+    fetch(`/inspections/api/{{ inspection.inspection_id }}/upload-photo/`, {
+        method: 'POST',
+        body: formData,
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Photo uploaded successfully!');
+            document.getElementById('singlePhotoForm').reset();
+            loadPhotos();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while uploading the photo.');
+    })
+    .finally(() => {
+        uploadBtn.disabled = false;
+        uploadBtn.innerHTML = '<i class="fas fa-upload"></i> Upload';
+    });
+}
+
+// Handle multiple photo upload form
+document.getElementById('photoUploadForm').addEventListener('submit', function(e) {
+    const uploadBtn = document.getElementById('uploadBtn');
+    uploadBtn.disabled = true;
+    uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+});
+
+// Load photos on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadPhotos();
+});
+</script>
+{% endblock %}

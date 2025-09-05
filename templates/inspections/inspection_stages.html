@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Inspection Stages - QRAIL{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-12">
+        <!-- Header -->
+        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="fas fa-cogs"></i> Inspection Stages Management
+            </h1>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createStageModal">
+                <i class="fas fa-plus"></i> Create New Stage
+            </button>
+        </div>
+
+        <!-- Stages List -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Available Inspection Stages</h6>
+            </div>
+            <div class="card-body">
+                {% if stages %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Order</th>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                    <th>Required Participants</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for stage in stages %}
+                                <tr>
+                                    <td>{{ stage.order }}</td>
+                                    <td>
+                                        <strong>{{ stage.name }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-info">{{ stage.get_stage_type_display }}</span>
+                                    </td>
+                                    <td>{{ stage.description|truncatechars:100 }}</td>
+                                    <td>
+                                        <div class="d-flex flex-wrap gap-1">
+                                            {% if stage.requires_vendor %}
+                                                <span class="badge badge-warning">Vendor</span>
+                                            {% endif %}
+                                            {% if stage.requires_receiver %}
+                                                <span class="badge badge-success">Receiver</span>
+                                            {% endif %}
+                                            {% if stage.requires_railway_auth %}
+                                                <span class="badge badge-primary">Railway Auth</span>
+                                            {% endif %}
+                                            {% if stage.requires_worker %}
+                                                <span class="badge badge-secondary">Worker</span>
+                                            {% endif %}
+                                            {% if not stage.requires_vendor and not stage.requires_receiver and not stage.requires_railway_auth and not stage.requires_worker %}
+                                                <span class="text-muted">None</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if stage.is_active %}
+                                            <span class="badge badge-success">Active</span>
+                                        {% else %}
+                                            <span class="badge badge-secondary">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button class="btn btn-sm btn-outline-primary" data-stage-id="{{ stage.id }}" onclick="editStage(this)">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" data-stage-id="{{ stage.id }}" onclick="deleteStage(this)">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-cogs fa-3x text-gray-300 mb-3"></i>
+                        <p class="text-muted">No inspection stages found.</p>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createStageModal">
+                            Create First Stage
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create/Edit Stage Modal -->
+<div class="modal fade" id="createStageModal" tabindex="-1" aria-labelledby="createStageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createStageModalLabel">Create New Inspection Stage</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" id="stageForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">Stage Name *</label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <div class="text-danger">{{ form.name.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.stage_type.id_for_label }}" class="form-label">Stage Type *</label>
+                                {{ form.stage_type }}
+                                {% if form.stage_type.errors %}
+                                    <div class="text-danger">{{ form.stage_type.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">Description *</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="text-danger">{{ form.description.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.order.id_for_label }}" class="form-label">Order</label>
+                                {{ form.order }}
+                                {% if form.order.errors %}
+                                    <div class="text-danger">{{ form.order.errors }}</div>
+                                {% endif %}
+                                <div class="form-text">Lower numbers appear first</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                        Active
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Required Participants</label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    {{ form.requires_vendor }}
+                                    <label class="form-check-label" for="{{ form.requires_vendor.id_for_label }}">
+                                        Vendor
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    {{ form.requires_receiver }}
+                                    <label class="form-check-label" for="{{ form.requires_receiver.id_for_label }}">
+                                        Receiver
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    {{ form.requires_railway_auth }}
+                                    <label class="form-check-label" for="{{ form.requires_railway_auth.id_for_label }}">
+                                        Railway Authority
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    {{ form.requires_worker }}
+                                    <label class="form-check-label" for="{{ form.requires_worker.id_for_label }}">
+                                        Worker
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Stage</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function editStage(button) {
+    const stageId = button.getAttribute('data-stage-id');
+    // This would need to be implemented to edit existing stages
+    console.log('Edit stage:', stageId);
+    alert('Edit functionality will be implemented in the next version.');
+}
+
+function deleteStage(button) {
+    const stageId = button.getAttribute('data-stage-id');
+    if (confirm('Are you sure you want to delete this inspection stage?')) {
+        // This would need to be implemented to delete stages
+        console.log('Delete stage:', stageId);
+        alert('Delete functionality will be implemented in the next version.');
+    }
+}
+
+// Handle form submission
+document.getElementById('stageForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    fetch('{% url "inspections:inspection_stages" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+    })
+    .then(response => {
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('Error creating stage. Please try again.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while creating the stage.');
+    });
+});
+</script>
+{% endblock %}

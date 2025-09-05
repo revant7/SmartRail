@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Notification Preferences - QRAIL{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-12">
+        <!-- Header -->
+        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="fas fa-bell"></i> Notification Preferences
+            </h1>
+        </div>
+
+        <!-- Notification Preferences Form -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Configure Your Notification Settings</h6>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="font-weight-bold mb-3">Email Notifications</h6>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="email_inspections" id="email_inspections" 
+                                       {% if preferences.email_inspections %}checked{% endif %}>
+                                <label class="form-check-label" for="email_inspections">
+                                    Inspection Updates
+                                </label>
+                                <small class="form-text text-muted">Get notified about inspection status changes</small>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="email_orders" id="email_orders" 
+                                       {% if preferences.email_orders %}checked{% endif %}>
+                                <label class="form-check-label" for="email_orders">
+                                    Order Updates
+                                </label>
+                                <small class="form-text text-muted">Get notified about purchase order changes</small>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="email_requirements" id="email_requirements" 
+                                       {% if preferences.email_requirements %}checked{% endif %}>
+                                <label class="form-check-label" for="email_requirements">
+                                    Requirement Updates
+                                </label>
+                                <small class="form-text text-muted">Get notified about requirement changes</small>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="email_tracking" id="email_tracking" 
+                                       {% if preferences.email_tracking %}checked{% endif %}>
+                                <label class="form-check-label" for="email_tracking">
+                                    Tracking Updates
+                                </label>
+                                <small class="form-text text-muted">Get notified about tracking status changes</small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6 class="font-weight-bold mb-3">In-App Notifications</h6>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="app_inspections" id="app_inspections" 
+                                       {% if preferences.app_inspections %}checked{% endif %}>
+                                <label class="form-check-label" for="app_inspections">
+                                    Inspection Updates
+                                </label>
+                                <small class="form-text text-muted">Show in-app notifications for inspections</small>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="app_orders" id="app_orders" 
+                                       {% if preferences.app_orders %}checked{% endif %}>
+                                <label class="form-check-label" for="app_orders">
+                                    Order Updates
+                                </label>
+                                <small class="form-text text-muted">Show in-app notifications for orders</small>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="app_requirements" id="app_requirements" 
+                                       {% if preferences.app_requirements %}checked{% endif %}>
+                                <label class="form-check-label" for="app_requirements">
+                                    Requirement Updates
+                                </label>
+                                <small class="form-text text-muted">Show in-app notifications for requirements</small>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="app_tracking" id="app_tracking" 
+                                       {% if preferences.app_tracking %}checked{% endif %}>
+                                <label class="form-check-label" for="app_tracking">
+                                    Tracking Updates
+                                </label>
+                                <small class="form-text text-muted">Show in-app notifications for tracking</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <h6 class="font-weight-bold mb-3">Notification Frequency</h6>
+                            
+                            <div class="form-group">
+                                <label for="frequency" class="form-label">How often would you like to receive notifications?</label>
+                                <select class="form-control" name="frequency" id="frequency">
+                                    <option value="immediate" {% if preferences.frequency == 'immediate' %}selected{% endif %}>Immediately</option>
+                                    <option value="daily" {% if preferences.frequency == 'daily' %}selected{% endif %}>Daily Digest</option>
+                                    <option value="weekly" {% if preferences.frequency == 'weekly' %}selected{% endif %}>Weekly Summary</option>
+                                    <option value="never" {% if preferences.frequency == 'never' %}selected{% endif %}>Never</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6 class="font-weight-bold mb-3">Quiet Hours</h6>
+                            
+                            <div class="form-group">
+                                <label for="quiet_start" class="form-label">Start Time</label>
+                                <input type="time" class="form-control" name="quiet_start" id="quiet_start" 
+                                       value="{{ preferences.quiet_start|default:'22:00' }}">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="quiet_end" class="form-label">End Time</label>
+                                <input type="time" class="form-control" name="quiet_end" id="quiet_end" 
+                                       value="{{ preferences.quiet_end|default:'08:00' }}">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Preferences
+                        </button>
+                        <a href="{% url 'notifications:notification_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Notifications
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

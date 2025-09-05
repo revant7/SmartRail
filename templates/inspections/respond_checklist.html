@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Respond to Checklist - QRAIL{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Header -->
+        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="fas fa-check-square"></i> Respond to Checklist Item
+            </h1>
+            <a href="{% url 'inspections:inspection_detail' inspection.inspection_id %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Inspection
+            </a>
+        </div>
+
+        <!-- Checklist Item Info -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Checklist Item</h6>
+            </div>
+            <div class="card-body">
+                <h5>{{ checklist_item.item_text }}</h5>
+                {% if checklist_item.description %}
+                    <p class="text-muted">{{ checklist_item.description }}</p>
+                {% endif %}
+                {% if checklist_item.is_required %}
+                    <span class="badge badge-danger">Required</span>
+                {% else %}
+                    <span class="badge badge-info">Optional</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Response Form -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Your Response</h6>
+            </div>
+            <div class="card-body">
+                <form method="post" id="checklistResponseForm">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.response.id_for_label }}" class="form-label">Response *</label>
+                        {{ form.response }}
+                        {% if form.response.errors %}
+                            <div class="text-danger">{{ form.response.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.notes.id_for_label }}" class="form-label">Notes</label>
+                        {{ form.notes }}
+                        {% if form.notes.errors %}
+                            <div class="text-danger">{{ form.notes.errors }}</div>
+                        {% endif %}
+                        <div class="form-text">Add any additional notes or observations</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.photo.id_for_label }}" class="form-label">Attach Photo (Optional)</label>
+                        {{ form.photo }}
+                        {% if form.photo.errors %}
+                            <div class="text-danger">{{ form.photo.errors }}</div>
+                        {% endif %}
+                        <div class="form-text">Select a photo that supports your response</div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Submit Response
+                        </button>
+                        <a href="{% url 'inspections:inspection_detail' inspection.inspection_id %}" class="btn btn-secondary">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Response Guidelines -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Response Guidelines</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Response Types:</h6>
+                        <ul class="list-unstyled">
+                            <li><span class="badge badge-success mr-2">PASS</span> Item meets requirements</li>
+                            <li><span class="badge badge-danger mr-2">FAIL</span> Item does not meet requirements</li>
+                            <li><span class="badge badge-warning mr-2">N/A</span> Not applicable to this inspection</li>
+                            <li><span class="badge badge-info mr-2">PENDING</span> Requires further review</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Best Practices:</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success"></i> Be specific in your notes</li>
+                            <li><i class="fas fa-check text-success"></i> Attach photos when relevant</li>
+                            <li><i class="fas fa-check text-success"></i> Document any issues found</li>
+                            <li><i class="fas fa-check text-success"></i> Provide clear recommendations</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Handle form submission
+document.getElementById('checklistResponseForm').addEventListener('submit', function(e) {
+    const submitBtn = document.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+});
+</script>
+{% endblock %}

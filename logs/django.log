@@ -552,3 +552,56 @@ INFO 2025-09-05 14:55:24,412 autoreload 56717 136746253344896 Watching for file 
 INFO 2025-09-05 14:56:23,529 autoreload 56717 136746253344896 /mnt/c/Users/91772/Desktop/My Work and Projects/QRailway/QRAILWAY/railway/urls.py changed, reloading.
 INFO 2025-09-05 14:56:35,657 autoreload 57191 131837471985792 Watching for file changes with StatReloader
 INFO 2025-09-05 15:00:49,682 autoreload 58435 126838720573568 Watching for file changes with StatReloader
+INFO 2025-09-05 15:44:16,578 autoreload 71279 123784523214976 Watching for file changes with StatReloader
+INFO 2025-09-05 16:00:24,164 autoreload 71279 123784523214976 /mnt/c/Users/91772/Desktop/My Work and Projects/QRailway/QRAILWAY/qrail/settings.py changed, reloading.
+INFO 2025-09-05 16:00:51,942 autoreload 73846 134910822895744 Watching for file changes with StatReloader
+INFO 2025-09-05 16:09:12,677 autoreload 73846 134910822895744 /mnt/c/Users/91772/Desktop/My Work and Projects/QRailway/QRAILWAY/inspections/models.py changed, reloading.
+INFO 2025-09-05 16:09:42,587 autoreload 75792 127530675908736 Watching for file changes with StatReloader
+INFO 2025-09-05 16:13:21,417 autoreload 75792 127530675908736 /mnt/c/Users/91772/Desktop/My Work and Projects/QRailway/QRAILWAY/inspections/models.py changed, reloading.
+INFO 2025-09-05 16:13:32,804 autoreload 76884 131669483835520 Watching for file changes with StatReloader
+ERROR 2025-09-05 16:15:14,369 log 76884 131669381252800 Internal Server Error: /inspections/stages/
+Traceback (most recent call last):
+  File "/mnt/c/Users/91772/Desktop/My Work and Projects/QRailway/venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/c/Users/91772/Desktop/My Work and Projects/QRailway/venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/c/Users/91772/Desktop/My Work and Projects/QRailway/venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/c/Users/91772/Desktop/My Work and Projects/QRailway/QRAILWAY/inspections/views.py", line 402, in inspection_stages
+    return render(request, 'inspections/inspection_stages.html', context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/c/Users/91772/Desktop/My Work and Projects/QRailway/venv/lib/python3.12/site-packages/django/shortcuts.py", line 24, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/c/Users/91772/Desktop/My Work and Projects/QRailway/venv/lib/python3.12/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/c/Users/91772/Desktop/My Work and Projects/QRailway/venv/lib/python3.12/site-packages/django/template/loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: inspections/inspection_stages.html
+ERROR 2025-09-05 16:32:01,696 log 76884 131669381252800 Internal Server Error: /notifications/preferences/
+Traceback (most recent call last):
+  File "/mnt/c/Users/91772/Desktop/My Work and Projects/QRailway/venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/c/Users/91772/Desktop/My Work and Projects/QRailway/venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/c/Users/91772/Desktop/My Work and Projects/QRailway/venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/c/Users/91772/Desktop/My Work and Projects/QRailway/QRAILWAY/notifications/views.py", line 132, in notification_preferences
+    return render(request, 'notifications/preferences.html', context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/c/Users/91772/Desktop/My Work and Projects/QRailway/venv/lib/python3.12/site-packages/django/shortcuts.py", line 24, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/c/Users/91772/Desktop/My Work and Projects/QRailway/venv/lib/python3.12/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/c/Users/91772/Desktop/My Work and Projects/QRailway/venv/lib/python3.12/site-packages/django/template/loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: notifications/preferences.html

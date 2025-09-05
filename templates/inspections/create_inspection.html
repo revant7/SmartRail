@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Inspection - QRAIL{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Header -->
+        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="fas fa-plus"></i> Create New Inspection
+            </h1>
+            <a href="{% url 'inspections:inspection_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+        </div>
+
+        <!-- Inspection Form -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Inspection Details</h6>
+            </div>
+            <div class="card-body">
+                <form method="post" id="inspectionForm">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <!-- Stage Selection -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.stage.id_for_label }}" class="form-label">Inspection Stage *</label>
+                                {{ form.stage }}
+                                {% if form.stage.errors %}
+                                    <div class="text-danger">{{ form.stage.errors }}</div>
+                                {% endif %}
+                                <div class="form-text">Select the stage of manufacturing/supply chain</div>
+                            </div>
+                        </div>
+
+                        <!-- Related Object Selection -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Related Object *</label>
+                                <div class="row">
+                                    <div class="col-4">
+                                        <label for="{{ form.requirement.id_for_label }}" class="form-label small">Requirement</label>
+                                        {{ form.requirement }}
+                                    </div>
+                                    <div class="col-4">
+                                        <label for="{{ form.part.id_for_label }}" class="form-label small">Part</label>
+                                        {{ form.part }}
+                                    </div>
+                                    <div class="col-4">
+                                        <label for="{{ form.order.id_for_label }}" class="form-label small">Order</label>
+                                        {{ form.order }}
+                                    </div>
+                                </div>
+                                <div class="form-text">Select at least one related object</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Location Information -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.inspection_location.id_for_label }}" class="form-label">Inspection Location *</label>
+                                {{ form.inspection_location }}
+                                {% if form.inspection_location.errors %}
+                                    <div class="text-danger">{{ form.inspection_location.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.railway_zone.id_for_label }}" class="form-label">Railway Zone</label>
+                                {{ form.railway_zone }}
+                                {% if form.railway_zone.errors %}
+                                    <div class="text-danger">{{ form.railway_zone.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.railway_division.id_for_label }}" class="form-label">Railway Division</label>
+                                {{ form.railway_division }}
+                                {% if form.railway_division.errors %}
+                                    <div class="text-danger">{{ form.railway_division.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.track_section.id_for_label }}" class="form-label">Track Section</label>
+                                {{ form.track_section }}
+                                {% if form.track_section.errors %}
+                                    <div class="text-danger">{{ form.track_section.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.kilometer_marker.id_for_label }}" class="form-label">Kilometer Marker</label>
+                                {{ form.kilometer_marker }}
+                                {% if form.kilometer_marker.errors %}
+                                    <div class="text-danger">{{ form.kilometer_marker.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">GPS Coordinates (Optional)</label>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <label for="{{ form.latitude.id_for_label }}" class="form-label small">Latitude</label>
+                                        {{ form.latitude }}
+                                    </div>
+                                    <div class="col-6">
+                                        <label for="{{ form.longitude.id_for_label }}" class="form-label small">Longitude</label>
+                                        {{ form.longitude }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quality Assessment -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.quality_rating.id_for_label }}" class="form-label">Quality Rating (0-10)</label>
+                                {{ form.quality_rating }}
+                                {% if form.quality_rating.errors %}
+                                    <div class="text-danger">{{ form.quality_rating.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.overall_score.id_for_label }}" class="form-label">Overall Score (0-100)</label>
+                                {{ form.overall_score }}
+                                {% if form.overall_score.errors %}
+                                    <div class="text-danger">{{ form.overall_score.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.result.id_for_label }}" class="form-label">Inspection Result</label>
+                                {{ form.result }}
+                                {% if form.result.errors %}
+                                    <div class="text-danger">{{ form.result.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Findings and Notes -->
+                    <div class="mb-3">
+                        <label for="{{ form.findings.id_for_label }}" class="form-label">Findings</label>
+                        {{ form.findings }}
+                        {% if form.findings.errors %}
+                            <div class="text-danger">{{ form.findings.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.issues_found.id_for_label }}" class="form-label">Issues Found</label>
+                        {{ form.issues_found }}
+                        {% if form.issues_found.errors %}
+                            <div class="text-danger">{{ form.issues_found.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.recommendations.id_for_label }}" class="form-label">Recommendations</label>
+                        {{ form.recommendations }}
+                        {% if form.recommendations.errors %}
+                            <div class="text-danger">{{ form.recommendations.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.corrective_actions.id_for_label }}" class="form-label">Corrective Actions</label>
+                        {{ form.corrective_actions }}
+                        {% if form.corrective_actions.errors %}
+                            <div class="text-danger">{{ form.corrective_actions.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.overview_notes.id_for_label }}" class="form-label">Overview Notes (Optional)</label>
+                        {{ form.overview_notes }}
+                        {% if form.overview_notes.errors %}
+                            <div class="text-danger">{{ form.overview_notes.errors }}</div>
+                        {% endif %}
+                        <div class="form-text">Optional overview notes from the inspector</div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Create Inspection
+                        </button>
+                        <a href="{% url 'inspections:inspection_list' %}" class="btn btn-secondary">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Stage Information -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Available Inspection Stages</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for stage in stages %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-left-primary">
+                            <div class="card-body">
+                                <h6 class="card-title">{{ stage.name }}</h6>
+                                <p class="card-text text-sm">{{ stage.description }}</p>
+                                <div class="mt-2">
+                                    <small class="text-muted">Required Participants:</small>
+                                    <div class="mt-1">
+                                        {% if stage.requires_vendor %}
+                                            <span class="badge badge-info mr-1">Vendor</span>
+                                        {% endif %}
+                                        {% if stage.requires_receiver %}
+                                            <span class="badge badge-success mr-1">Receiver</span>
+                                        {% endif %}
+                                        {% if stage.requires_railway_auth %}
+                                            <span class="badge badge-warning mr-1">Railway Authority</span>
+                                        {% endif %}
+                                        {% if stage.requires_worker %}
+                                            <span class="badge badge-secondary mr-1">Worker</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-fill location based on selected requirement/part/order
+document.addEventListener('DOMContentLoaded', function() {
+    const requirementSelect = document.getElementById('{{ form.requirement.id_for_label }}');
+    const partSelect = document.getElementById('{{ form.part.id_for_label }}');
+    const orderSelect = document.getElementById('{{ form.order.id_for_label }}');
+    
+    const locationField = document.getElementById('{{ form.inspection_location.id_for_label }}');
+    const zoneField = document.getElementById('{{ form.railway_zone.id_for_label }}');
+    const divisionField = document.getElementById('{{ form.railway_division.id_for_label }}');
+    
+    function updateLocationFromSelection() {
+        // This would need to be implemented with AJAX to fetch location data
+        // based on the selected requirement, part, or order
+    }
+    
+    requirementSelect.addEventListener('change', updateLocationFromSelection);
+    partSelect.addEventListener('change', updateLocationFromSelection);
+    orderSelect.addEventListener('change', updateLocationFromSelection);
+});
+</script>
+{% endblock %}

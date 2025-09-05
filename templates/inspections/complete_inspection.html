@@ -1,0 +1,244 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Complete Inspection - QRAIL{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Header -->
+        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="fas fa-check-circle"></i> Complete Inspection
+            </h1>
+            <a href="{% url 'inspections:inspection_detail' inspection.inspection_id %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Inspection
+            </a>
+        </div>
+
+        <!-- Inspection Summary -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Inspection Summary</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Inspection ID:</strong></td>
+                                <td><code>{{ inspection.inspection_id }}</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Stage:</strong></td>
+                                <td>{{ inspection.stage.name }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Status:</strong></td>
+                                <td>
+                                    <span class="badge badge-{% if inspection.status == 'COMPLETED' %}success{% elif inspection.status == 'PENDING' %}warning{% elif inspection.status == 'IN_PROGRESS' %}info{% else %}secondary{% endif %}">
+                                        {{ inspection.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Location:</strong></td>
+                                <td>{{ inspection.inspection_location }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Quality Rating:</strong></td>
+                                <td>
+                                    {% if inspection.quality_rating %}
+                                        <div class="d-flex align-items-center">
+                                            <div class="progress mr-2" style="width: 100px; height: 8px;">
+                                                <div class="progress-bar" role="progressbar" 
+                                                     style="width: {{ inspection.quality_rating|floatformat:0 }}0%" 
+                                                     aria-valuenow="{{ inspection.quality_rating }}" 
+                                                     aria-valuemin="0" aria-valuemax="10">
+                                                </div>
+                                            </div>
+                                            <span class="font-weight-bold">{{ inspection.quality_rating }}/10</span>
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted">Not rated</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Overall Score:</strong></td>
+                                <td>
+                                    {% if inspection.overall_score %}
+                                        {{ inspection.overall_score }}/100
+                                    {% else %}
+                                        <span class="text-muted">Not scored</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Result:</strong></td>
+                                <td>
+                                    {% if inspection.result %}
+                                        <span class="badge badge-{% if inspection.result == 'PASS' %}success{% elif inspection.result == 'FAIL' %}danger{% else %}warning{% endif %}">
+                                            {{ inspection.get_result_display }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">Not determined</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Participants Check -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Required Participants</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for role, user in inspection.get_participants %}
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <i class="fas fa-user fa-2x text-success mb-2"></i>
+                            <h6 class="font-weight-bold text-success">{{ role }}</h6>
+                            <p class="text-muted">{{ user.get_full_name|default:user.username }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                {% if not inspection.can_be_completed %}
+                <div class="alert alert-warning mt-3">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Warning:</strong> This inspection cannot be completed because required participants are missing.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Completion Checklist -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Completion Checklist</h6>
+            </div>
+            <div class="card-body">
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="checklist1" required>
+                    <label class="form-check-label" for="checklist1">
+                        All required participants have been assigned and present
+                    </label>
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="checklist2" required>
+                    <label class="form-check-label" for="checklist2">
+                        All inspection findings have been documented
+                    </label>
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="checklist3" required>
+                    <label class="form-check-label" for="checklist3">
+                        Quality rating and overall score have been assigned
+                    </label>
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="checklist4" required>
+                    <label class="form-check-label" for="checklist4">
+                        Inspection result has been determined
+                    </label>
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="checklist5" required>
+                    <label class="form-check-label" for="checklist5">
+                        All required photos and documents have been uploaded
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completion Form -->
+        {% if inspection.can_be_completed %}
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Complete Inspection</h6>
+            </div>
+            <div class="card-body">
+                <form method="post" id="completeInspectionForm">
+                    {% csrf_token %}
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Note:</strong> Once completed, this inspection cannot be modified. Please ensure all information is accurate before proceeding.
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-success" id="completeBtn">
+                            <i class="fas fa-check-circle"></i> Complete Inspection
+                        </button>
+                        <a href="{% url 'inspections:inspection_detail' inspection.inspection_id %}" class="btn btn-secondary">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-danger">Cannot Complete Inspection</h6>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Error:</strong> This inspection cannot be completed at this time. Please ensure all required participants are assigned and present.
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{% url 'inspections:update_inspection' inspection.inspection_id %}" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> Edit Inspection
+                    </a>
+                    <a href="{% url 'inspections:inspection_detail' inspection.inspection_id %}" class="btn btn-secondary">
+                        Back to Inspection
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Handle form submission
+document.getElementById('completeInspectionForm')?.addEventListener('submit', function(e) {
+    const completeBtn = document.getElementById('completeBtn');
+    completeBtn.disabled = true;
+    completeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Completing...';
+});
+
+// Validate checklist before allowing completion
+document.addEventListener('DOMContentLoaded', function() {
+    const completeBtn = document.getElementById('completeBtn');
+    const checkboxes = document.querySelectorAll('input[type="checkbox"][required]');
+    
+    function validateChecklist() {
+        const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
+        if (completeBtn) {
+            completeBtn.disabled = !allChecked;
+        }
+    }
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', validateChecklist);
+    });
+    
+    // Initial validation
+    validateChecklist();
+});
+</script>
+{% endblock %}

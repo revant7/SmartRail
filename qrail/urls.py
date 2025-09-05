@@ -20,6 +20,7 @@ urlpatterns = [
     path('parts/', include('parts.urls')),
     path('orders/', include('orders.urls')),
     path('tracking/', include('tracking.urls')),
+    path('inspections/', include('inspections.urls')),
     
     # Health check endpoints
     path('health/', health_check, name='health_check'),

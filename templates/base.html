@@ -221,6 +221,12 @@
                         </li>
                         
                         <li class="nav-item">
+                            <a class="nav-link {% if 'inspection' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'inspections:dashboard' %}">
+                                <i class="bi bi-clipboard-check"></i> Online Inspections
+                            </a>
+                        </li>
+                        
+                        <li class="nav-item">
                             <a class="nav-link {% if 'notification' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'notifications:notification_list' %}">
                                 <i class="bi bi-bell"></i> Notifications
                             </a>
