@@ -45,7 +45,7 @@ def project_list_view(request):
     page_obj = paginator.get_page(page_number)
     
     context = {
-        'page_obj': page_obj,
+        'projects': page_obj,
         'search_query': search_query,
         'status_filter': status_filter,
         'status_choices': Project.PROJECT_STATUS_CHOICES,
@@ -66,6 +66,41 @@ def project_detail_view(request, project_id):
         'orders': orders,
     }
     return render(request, 'orders/project_detail.html', context)
+
+
+@login_required
+def project_create_view(request):
+    if not (request.user.is_admin() or request.user.is_railway_authority()):
+        messages.error(request, 'You do not have permission to create projects.')
+        return redirect('orders:project_list')
+    if request.method == 'POST':
+        form = ProjectForm(request.POST)
+        if form.is_valid():
+            project = form.save(commit=False)
+            project.created_by = request.user
+            project.save()
+            messages.success(request, f'Project {project.project_code} created successfully!')
+            return redirect('orders:project_detail', project_id=project.id)
+    else:
+        form = ProjectForm()
+    return render(request, 'orders/project_form.html', {'form': form})
+
+
+@login_required
+def project_update_view(request, project_id):
+    project = get_object_or_404(Project, id=project_id)
+    if not (request.user.is_admin() or request.user.is_railway_authority()):
+        messages.error(request, 'You do not have permission to edit projects.')
+        return redirect('orders:project_detail', project_id=project.id)
+    if request.method == 'POST':
+        form = ProjectForm(request.POST, instance=project)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Project {project.project_code} updated successfully!')
+            return redirect('orders:project_detail', project_id=project.id)
+    else:
+        form = ProjectForm(instance=project)
+    return render(request, 'orders/project_form.html', {'form': form, 'project': project})
 
 
 @login_required
@@ -94,7 +129,7 @@ def vendor_list_view(request):
     page_obj = paginator.get_page(page_number)
     
     context = {
-        'page_obj': page_obj,
+        'vendors': page_obj,
         'search_query': search_query,
         'status_filter': status_filter,
         'status_choices': Vendor.VENDOR_STATUS_CHOICES,
@@ -115,6 +150,41 @@ def vendor_detail_view(request, vendor_id):
         'orders': orders,
     }
     return render(request, 'orders/vendor_detail.html', context)
+
+
+@login_required
+def vendor_create_view(request):
+    if not (request.user.is_admin() or request.user.is_railway_authority()):
+        messages.error(request, 'You do not have permission to add vendors.')
+        return redirect('orders:vendor_list')
+    if request.method == 'POST':
+        form = VendorForm(request.POST)
+        if form.is_valid():
+            vendor = form.save(commit=False)
+            vendor.created_by = request.user
+            vendor.save()
+            messages.success(request, f'Vendor {vendor.company_name} created successfully!')
+            return redirect('orders:vendor_detail', vendor_id=vendor.id)
+    else:
+        form = VendorForm()
+    return render(request, 'orders/vendor_form.html', {'form': form})
+
+
+@login_required
+def vendor_update_view(request, vendor_id):
+    vendor = get_object_or_404(Vendor, id=vendor_id)
+    if not (request.user.is_admin() or request.user.is_railway_authority()):
+        messages.error(request, 'You do not have permission to edit vendors.')
+        return redirect('orders:vendor_detail', vendor_id=vendor.id)
+    if request.method == 'POST':
+        form = VendorForm(request.POST, instance=vendor)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Vendor {vendor.company_name} updated successfully!')
+            return redirect('orders:vendor_detail', vendor_id=vendor.id)
+    else:
+        form = VendorForm(instance=vendor)
+    return render(request, 'orders/vendor_form.html', {'form': form, 'vendor': vendor})
 
 
 @login_required
@@ -148,7 +218,7 @@ def order_list_view(request):
     page_obj = paginator.get_page(page_number)
     
     context = {
-        'page_obj': page_obj,
+        'orders': page_obj,
         'search_query': search_query,
         'status_filter': status_filter,
         'priority_filter': priority_filter,
@@ -199,7 +269,7 @@ def order_create_view(request):
                 order.calculate_totals()
             
             messages.success(request, f'Order {order.order_number} created successfully!')
-            return redirect('order_detail', order_id=order.id)
+            return redirect('orders:order_detail', order_id=order.id)
     else:
         form = PurchaseOrderForm()
         line_item_formset = OrderLineItemFormSet()
@@ -233,7 +303,7 @@ def order_update_view(request, order_id):
                 order.calculate_totals()
             
             messages.success(request, f'Order {order.order_number} updated successfully!')
-            return redirect('order_detail', order_id=order.id)
+            return redirect('orders:order_detail', order_id=order.id)
     else:
         form = PurchaseOrderForm(instance=order)
         line_item_formset = OrderLineItemFormSet(instance=order)
@@ -256,11 +326,11 @@ def order_approve_view(request, order_id):
     
     if not (request.user.is_admin() or request.user.is_railway_authority()):
         messages.error(request, 'You do not have permission to approve orders.')
-        return redirect('order_detail', order_id=order.id)
+        return redirect('orders:order_detail', order_id=order.id)
     
     if order.status != 'PENDING_APPROVAL':
         messages.error(request, 'This order is not pending approval.')
-        return redirect('order_detail', order_id=order.id)
+        return redirect('orders:order_detail', order_id=order.id)
     
     order.status = 'APPROVED'
     order.approved_by = request.user
@@ -277,7 +347,30 @@ def order_approve_view(request, order_id):
     )
     
     messages.success(request, f'Order {order.order_number} approved successfully!')
-    return redirect('order_detail', order_id=order.id)
+    return redirect('orders:order_detail', order_id=order.id)
+
+
+@login_required
+@require_http_methods(["POST"])
+def order_vendor_confirm_view(request, order_id):
+    """
+    Vendor confirms/accepts an order.
+    """
+    order = get_object_or_404(PurchaseOrder, id=order_id)
+    if not request.user.is_vendor():
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+    if order.status not in ['SENT_TO_VENDOR', 'APPROVED']:
+        return JsonResponse({'error': 'Order not in confirmable state'}, status=400)
+    order.status = 'CONFIRMED'
+    order.save(update_fields=['status'])
+    OrderStatusHistory.objects.create(
+        order=order,
+        from_status='SENT_TO_VENDOR',
+        to_status='CONFIRMED',
+        changed_by=request.user,
+        notes='Order confirmed by vendor'
+    )
+    return JsonResponse({'success': True})
 
 
 # API Views

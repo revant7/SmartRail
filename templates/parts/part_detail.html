@@ -40,7 +40,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
@@ -55,17 +55,17 @@
                             <label class="form-label fw-bold">Status</label>
                             <p class="form-control-plaintext">
                                 {% if part.status == 'active' %}
-                                    <span class="badge bg-success">Active</span>
+                                <span class="badge bg-success">Active</span>
                                 {% elif part.status == 'inactive' %}
-                                    <span class="badge bg-warning">Inactive</span>
+                                <span class="badge bg-warning">Inactive</span>
                                 {% else %}
-                                    <span class="badge bg-danger">Discontinued</span>
+                                <span class="badge bg-danger">Discontinued</span>
                                 {% endif %}
                             </p>
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="mb-3">
                     <label class="form-label fw-bold">Description</label>
                     <p class="form-control-plaintext">{{ part.description|default:"No description available" }}</p>
@@ -114,7 +114,8 @@
                 <div class="row">
                     {% for image in part.images.all %}
                     <div class="col-md-4 mb-3">
-                        <img src="{{ image.image.url }}" class="img-fluid rounded" alt="{{ image.caption|default:part.name }}">
+                        <img src="{{ image.image.url }}" class="img-fluid rounded"
+                            alt="{{ image.caption|default:part.name }}">
                         {% if image.caption %}
                         <p class="text-muted small mt-1">{{ image.caption }}</p>
                         {% endif %}
@@ -150,7 +151,7 @@
         </div>
         {% endif %}
     </div>
-    
+
     <div class="col-md-4">
         <!-- QR Code -->
         <div class="card shadow mb-4">
@@ -173,7 +174,7 @@
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                    <a href="{% url 'parts:part_edit' part.id %}" class="btn btn-primary">
+                    <a href="{% url 'parts:part_update' part.id %}" class="btn btn-primary">
                         <i class="bi bi-pencil"></i> Edit Part
                     </a>
                     <a href="{% url 'parts:part_qr' part.id %}" class="btn btn-outline-info">
@@ -192,21 +193,21 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Generate QR code
-    const qrContainer = document.getElementById('qrcode');
-    const partUrl = window.location.origin + '{% url "parts:part_detail" part.id %}';
-    
-    QRCode.toCanvas(qrContainer, partUrl, {
-        width: 200,
-        height: 200,
-        color: {
-            dark: '#000000',
-            light: '#FFFFFF'
-        }
-    }, function (error) {
-        if (error) console.error(error);
+    document.addEventListener('DOMContentLoaded', function () {
+        // Generate QR code
+        const qrContainer = document.getElementById('qrcode');
+        const partUrl = window.location.origin + '{% url "parts:part_detail" part.id %}';
+
+        QRCode.toCanvas(qrContainer, partUrl, {
+            width: 200,
+            height: 200,
+            color: {
+                dark: '#000000',
+                light: '#FFFFFF'
+            }
+        }, function (error) {
+            if (error) console.error(error);
+        });
     });
-});
 </script>
 {% endblock %}

@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Part Categories - QRAIL{% endblock %}
+
+{% block page_header %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">Part Categories</h1>
+        <p class="text-muted">Manage categories for parts</p>
+    </div>
+    <div>
+        <a href="{% url 'parts:category_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Add Category
+        </a>
+    </div>
+    {% endblock %}
+
+    {% block content %}
+    <div class="card shadow">
+        <div class="card-body">
+            {% if categories %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>Parent</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in categories %}
+                        <tr>
+                            <td>{{ c.name }}</td>
+                            <td>{{ c.description|default:"-" }}</td>
+                            <td>{{ c.parent_category.name|default:"-" }}</td>
+                            <td>
+                                {% if c.is_active %}
+                                <span class="badge bg-success">Active</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'parts:category_update' c.id %}"
+                                    class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-ui-checks text-muted" style="font-size: 3rem;"></i>
+                <h5 class="text-muted mt-3">No categories found</h5>
+                <p class="text-muted">Create your first category.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endblock %}

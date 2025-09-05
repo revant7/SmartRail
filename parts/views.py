@@ -59,7 +59,7 @@ def part_list_view(request):
     categories = PartCategory.objects.filter(is_active=True)
     
     context = {
-        'page_obj': page_obj,
+        'parts': page_obj,
         'categories': categories,
         'search_query': search_query,
         'category_filter': category_filter,
@@ -116,7 +116,10 @@ def part_create_view(request):
                 specification_formset.save()
             
             messages.success(request, f'Part {part.part_number} created successfully!')
-            return redirect('part_detail', part_id=part.id)
+            return redirect('parts:part_detail', part_id=part.id)
+        else:
+            # Ensure formset exists even when the main form is invalid
+            specification_formset = PartSpecificationFormSet(request.POST)
     else:
         form = PartForm()
         specification_formset = PartSpecificationFormSet()
@@ -151,7 +154,10 @@ def part_update_view(request, part_id):
                 specification_formset.save()
             
             messages.success(request, f'Part {part.part_number} updated successfully!')
-            return redirect('part_detail', part_id=part.id)
+            return redirect('parts:part_detail', part_id=part.id)
+        else:
+            # Ensure formset exists even when the main form is invalid
+            specification_formset = PartSpecificationFormSet(request.POST, instance=part)
     else:
         form = PartForm(instance=part)
         specification_formset = PartSpecificationFormSet(instance=part)
@@ -174,13 +180,13 @@ def part_delete_view(request, part_id):
     
     if not (request.user.is_admin() or request.user.is_railway_authority()):
         messages.error(request, 'You do not have permission to delete parts.')
-        return redirect('part_detail', part_id=part.id)
+        return redirect('parts:part_detail', part_id=part.id)
     
     part_number = part.part_number
     part.delete()
     
     messages.success(request, f'Part {part_number} deleted successfully!')
-    return redirect('part_list')
+    return redirect('parts:part_list')
 
 
 @login_required
@@ -198,6 +204,51 @@ def part_qr_view(request, part_id):
         'part': part,
     }
     return render(request, 'parts/part_qr.html', context)
+
+
+@login_required
+def category_list_view(request):
+    categories = PartCategory.objects.all().order_by('name')
+    return render(request, 'parts/category_list.html', {'categories': categories})
+
+
+@login_required
+def category_create_view(request):
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        description = request.POST.get('description', '').strip()
+        parent_id = request.POST.get('parent_category')
+        parent = PartCategory.objects.filter(id=parent_id).first() if parent_id else None
+        if not name:
+            messages.error(request, 'Name is required.')
+        else:
+            PartCategory.objects.create(name=name, description=description, parent_category=parent)
+            messages.success(request, 'Category created successfully!')
+            return redirect('parts:category_list')
+    return render(request, 'parts/category_form.html', {'categories': PartCategory.objects.all()})
+
+
+@login_required
+def category_update_view(request, category_id):
+    category = get_object_or_404(PartCategory, id=category_id)
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        description = request.POST.get('description', '').strip()
+        parent_id = request.POST.get('parent_category')
+        parent = PartCategory.objects.filter(id=parent_id).first() if parent_id else None
+        if not name:
+            messages.error(request, 'Name is required.')
+        else:
+            category.name = name
+            category.description = description
+            category.parent_category = parent
+            category.save()
+            messages.success(request, 'Category updated successfully!')
+            return redirect('parts:category_list')
+    return render(request, 'parts/category_form.html', {
+        'category': category,
+        'categories': PartCategory.objects.exclude(id=category.id)
+    })
 
 
 # API Views

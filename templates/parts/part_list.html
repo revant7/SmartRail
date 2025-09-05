@@ -23,15 +23,14 @@
     <div class="card-body">
         <form method="get" class="row g-3">
             <div class="col-md-4">
-                <input type="text" class="form-control" name="search" placeholder="Search parts..." value="{{ request.GET.search }}">
+                <input type="text" class="form-control" name="search" placeholder="Search parts..."
+                    value="{{ request.GET.search }}">
             </div>
             <div class="col-md-3">
                 <select class="form-select" name="category">
                     <option value="">All Categories</option>
                     {% for category in categories %}
-                    <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>
-                        {{ category.name }}
-                    </option>
+                    <option value="{{ category.id }}" {% if category.id|stringformat:'s' == request.GET.category %}selected{% endif %}>{{ category.name }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -39,8 +38,10 @@
                 <select class="form-select" name="status">
                     <option value="">All Status</option>
                     <option value="active" {% if request.GET.status == "active" %}selected{% endif %}>Active</option>
-                    <option value="inactive" {% if request.GET.status == "inactive" %}selected{% endif %}>Inactive</option>
-                    <option value="discontinued" {% if request.GET.status == "discontinued" %}selected{% endif %}>Discontinued</option>
+                    <option value="inactive" {% if request.GET.status == "inactive" %}selected{% endif %}>Inactive
+                    </option>
+                    <option value="discontinued" {% if request.GET.status == "discontinued" %}selected{% endif %}>
+                        Discontinued</option>
                 </select>
             </div>
             <div class="col-md-2">
@@ -83,23 +84,27 @@
                         </td>
                         <td>
                             <small class="text-muted">
-                                {% if part.specifications.exists %}
-                                    {{ part.specifications.first.key }}: {{ part.specifications.first.value }}
-                                    {% if part.specifications.count > 1 %}
-                                        <br>+{{ part.specifications.count|add:"-1" }} more
-                                    {% endif %}
-                                {% else %}
-                                    No specifications
+                                {% with specs=part.specifications.all %}
+                                {% if specs|length %}
+                                {% with first_spec=specs.0 %}
+                                {{ first_spec.key }}: {{ first_spec.value }}
+                                {% endwith %}
+                                {% if specs|length > 1 %}
+                                <br>+{{ specs|length|add:"-1" }} more
                                 {% endif %}
+                                {% else %}
+                                No specifications
+                                {% endif %}
+                                {% endwith %}
                             </small>
                         </td>
                         <td>
                             {% if part.status == 'active' %}
-                                <span class="badge bg-success">Active</span>
+                            <span class="badge bg-success">Active</span>
                             {% elif part.status == 'inactive' %}
-                                <span class="badge bg-warning">Inactive</span>
+                            <span class="badge bg-warning">Inactive</span>
                             {% else %}
-                                <span class="badge bg-danger">Discontinued</span>
+                            <span class="badge bg-danger">Discontinued</span>
                             {% endif %}
                         </td>
                         <td>
@@ -107,7 +112,8 @@
                                 <a href="{% url 'parts:part_detail' part.id %}" class="btn btn-sm btn-outline-primary">
                                     <i class="bi bi-eye"></i> View
                                 </a>
-                                <a href="{% url 'parts:part_edit' part.id %}" class="btn btn-sm btn-outline-secondary">
+                                <a href="{% url 'parts:part_update' part.id %}"
+                                    class="btn btn-sm btn-outline-secondary">
                                     <i class="bi bi-pencil"></i> Edit
                                 </a>
                                 <a href="{% url 'parts:part_qr' part.id %}" class="btn btn-sm btn-outline-info">
@@ -130,7 +136,7 @@
                     <a class="page-link" href="?page={{ parts.previous_page_number }}">Previous</a>
                 </li>
                 {% endif %}
-                
+
                 {% for num in parts.paginator.page_range %}
                 {% if parts.number == num %}
                 <li class="page-item active">
@@ -142,7 +148,7 @@
                 </li>
                 {% endif %}
                 {% endfor %}
-                
+
                 {% if parts.has_next %}
                 <li class="page-item">
                     <a class="page-link" href="?page={{ parts.next_page_number }}">Next</a>

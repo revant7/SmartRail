@@ -28,7 +28,7 @@ def register_view(request):
     User registration view.
     """
     if request.user.is_authenticated:
-        return redirect('dashboard')
+        return redirect('core:dashboard')
     
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
@@ -40,7 +40,7 @@ def register_view(request):
                 request, 
                 'Account created successfully! Please wait for admin approval.'
             )
-            return redirect('login')
+            return redirect('accounts:login')
     else:
         form = CustomUserCreationForm()
     
@@ -52,7 +52,7 @@ def login_view(request):
     User login view.
     """
     if request.user.is_authenticated:
-        return redirect('dashboard')
+        return redirect('core:dashboard')
     
     if request.method == 'POST':
         form = CustomAuthenticationForm(request, data=request.POST)
@@ -72,7 +72,7 @@ def login_view(request):
                         user_agent=request.META.get('HTTP_USER_AGENT', '')
                     )
                     messages.success(request, f'Welcome back, {user.get_full_name()}!')
-                    return redirect('dashboard')
+                    return redirect('core:dashboard')
                 else:
                     messages.error(request, 'Your account is inactive.')
             else:
@@ -101,7 +101,7 @@ def logout_view(request):
     
     logout(request)
     messages.info(request, 'You have been logged out successfully.')
-    return redirect('login')
+    return redirect('accounts:login')
 
 
 @login_required
@@ -119,7 +119,7 @@ def profile_view(request):
             user_form.save()
             profile_form.save()
             messages.success(request, 'Profile updated successfully!')
-            return redirect('profile')
+            return redirect('accounts:profile')
     else:
         user_form = UserUpdateForm(instance=request.user)
         profile_form = UserProfileForm(instance=user_profile)
@@ -158,7 +158,7 @@ def user_list_view(request):
     """
     if not (request.user.is_admin() or request.user.is_railway_authority()):
         messages.error(request, 'You do not have permission to view this page.')
-        return redirect('dashboard')
+        return redirect('core:dashboard')
     
     users = User.objects.all().order_by('-date_joined')
     
@@ -183,7 +183,7 @@ def user_list_view(request):
     page_obj = paginator.get_page(page_number)
     
     context = {
-        'page_obj': page_obj,
+        'users': page_obj,
         'user_types': User.USER_TYPE_CHOICES,
         'search_query': search_query,
         'user_type_filter': user_type_filter,
@@ -198,13 +198,13 @@ def user_detail_view(request, user_id):
     """
     if not (request.user.is_admin() or request.user.is_railway_authority()):
         messages.error(request, 'You do not have permission to view this page.')
-        return redirect('dashboard')
+        return redirect('core:dashboard')
     
     user = get_object_or_404(User, id=user_id)
     user_profile = get_object_or_404(UserProfile, user=user)
     
     context = {
-        'user_detail': user,
+        'user_obj': user,
         'user_profile': user_profile,
     }
     return render(request, 'accounts/user_detail.html', context)
