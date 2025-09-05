@@ -1,8 +1,8 @@
 from django.contrib import admin
 from .models import (
-    InspectionStage, OnlineInspection, InspectionPhoto, InspectionDocument,
+    InspectionStage, EquipmentBatch, OnlineInspection, InspectionPhoto, InspectionDocument,
     InspectionChecklist, InspectionChecklistResponse, AITrainingData,
-    InspectionSummary
+    InspectionSummary, AISmartReport
 )
 
 
@@ -14,25 +14,52 @@ class InspectionStageAdmin(admin.ModelAdmin):
     ordering = ['order', 'name']
 
 
-@admin.register(OnlineInspection)
-class OnlineInspectionAdmin(admin.ModelAdmin):
-    list_display = [
-        'inspection_id', 'stage', 'requirement', 'part', 'status', 
-        'result', 'quality_rating', 'inspection_date'
-    ]
-    list_filter = [
-        'stage', 'status', 'result', 'inspection_date', 'stage__stage_type'
-    ]
-    search_fields = [
-        'inspection_id', 'requirement__title', 
-        'findings', 'issues_found'
-    ]
-    readonly_fields = ['inspection_id', 'created_at', 'updated_at']
-    raw_id_fields = ['requirement']
+@admin.register(EquipmentBatch)
+class EquipmentBatchAdmin(admin.ModelAdmin):
+    list_display = ['batch_name', 'batch_uuid', 'equipment_type', 'current_stage', 'created_at']
+    list_filter = ['equipment_type', 'current_stage', 'created_at']
+    search_fields = ['batch_name', 'batch_uuid', 'manufacturer', 'model_number', 'serial_number']
+    readonly_fields = ['batch_uuid', 'created_at', 'updated_at']
+    raw_id_fields = ['requirement', 'part']
     
     fieldsets = (
         ('Basic Information', {
-            'fields': ('inspection_id', 'stage', 'requirement')
+            'fields': ('batch_uuid', 'batch_name', 'equipment_type')
+        }),
+        ('Equipment Details', {
+            'fields': ('manufacturer', 'model_number', 'serial_number', 'manufacturing_date', 'warranty_expiry')
+        }),
+        ('Related Objects', {
+            'fields': ('requirement', 'part')
+        }),
+        ('Status', {
+            'fields': ('current_stage',)
+        }),
+        ('Timing', {
+            'fields': ('created_at', 'updated_at')
+        }),
+    )
+
+
+@admin.register(OnlineInspection)
+class OnlineInspectionAdmin(admin.ModelAdmin):
+    list_display = [
+        'inspection_id', 'equipment_batch', 'stage', 'inspection_source', 'status', 
+        'result', 'quality_rating', 'inspection_date'
+    ]
+    list_filter = [
+        'stage', 'inspection_source', 'status', 'result', 'inspection_date', 'stage__stage_type'
+    ]
+    search_fields = [
+        'inspection_id', 'equipment_batch__batch_name', 'equipment_batch__batch_uuid',
+        'findings', 'issues_found'
+    ]
+    readonly_fields = ['inspection_id', 'created_at', 'updated_at']
+    raw_id_fields = ['equipment_batch', 'requirement', 'part']
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('inspection_id', 'equipment_batch', 'stage', 'inspection_source')
         }),
         ('Status & Results', {
             'fields': ('status', 'result', 'quality_rating', 'overall_score')
@@ -46,11 +73,15 @@ class OnlineInspectionAdmin(admin.ModelAdmin):
         ('Participants', {
             'fields': ('vendor', 'receiver', 'railway_auth', 'worker')
         }),
+        ('Related Objects (Legacy)', {
+            'fields': ('requirement', 'part', 'order'),
+            'classes': ('collapse',)
+        }),
         ('Timing', {
             'fields': ('inspection_date', 'completed_at', 'created_at', 'updated_at')
         }),
         ('AI Data', {
-            'fields': ('ai_training_data', 'ai_summary_generated', 'ai_summary')
+            'fields': ('ai_training_data_json', 'ai_summary_generated', 'ai_summary_text')
         }),
     )
 
@@ -93,6 +124,34 @@ class AITrainingDataAdmin(admin.ModelAdmin):
     list_filter = ['processed', 'created_at']
     search_fields = ['inspection__inspection_id', 'ai_model_version']
     raw_id_fields = ['inspection']
+
+
+@admin.register(AISmartReport)
+class AISmartReportAdmin(admin.ModelAdmin):
+    list_display = ['equipment_batch', 'status', 'ai_model_version', 'confidence_score', 'generated_at']
+    list_filter = ['status', 'ai_model_version', 'generated_at']
+    search_fields = ['equipment_batch__batch_name', 'equipment_batch__batch_uuid', 'executive_summary']
+    raw_id_fields = ['equipment_batch']
+    readonly_fields = ['generated_at', 'updated_at', 'completed_at']
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('equipment_batch', 'status')
+        }),
+        ('Report Content', {
+            'fields': ('executive_summary', 'quality_assessment', 'defect_analysis', 'stage_comparison', 'recommendations', 'risk_assessment', 'compliance_status')
+        }),
+        ('Data Sources', {
+            'fields': ('vendor_inspections', 'railway_auth_inspections', 'worker_inspections'),
+            'classes': ('collapse',)
+        }),
+        ('AI Processing', {
+            'fields': ('ai_model_version', 'confidence_score', 'processing_time_seconds')
+        }),
+        ('Timing', {
+            'fields': ('generated_at', 'completed_at', 'updated_at')
+        }),
+    )
 
 
 @admin.register(InspectionSummary)

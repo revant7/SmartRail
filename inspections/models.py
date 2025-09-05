@@ -53,9 +53,65 @@ class InspectionStage(models.Model):
         return f"{self.name} ({self.get_stage_type_display()})"
 
 
+class EquipmentBatch(models.Model):
+    """
+    Equipment batch tracking with UUID for QR code scanning.
+    """
+    batch_uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    batch_name = models.CharField(max_length=200)
+    equipment_type = models.CharField(max_length=100)
+    manufacturer = models.CharField(max_length=200, blank=True)
+    model_number = models.CharField(max_length=100, blank=True)
+    serial_number = models.CharField(max_length=100, blank=True)
+    manufacturing_date = models.DateField(null=True, blank=True)
+    warranty_expiry = models.DateField(null=True, blank=True)
+    
+    # Related Objects
+    requirement = models.ForeignKey(
+        Requirement,
+        on_delete=models.CASCADE,
+        related_name='equipment_batches',
+        null=True,
+        blank=True
+    )
+    part = models.ForeignKey(
+        Part,
+        on_delete=models.CASCADE,
+        related_name='equipment_batches',
+        null=True,
+        blank=True
+    )
+    
+    # Status tracking
+    current_stage = models.CharField(
+        max_length=20,
+        choices=[
+            ('MANUFACTURING', 'Manufacturing'),
+            ('SUPPLY', 'Supply'),
+            ('RECEIVING', 'Receiving'),
+            ('FITTING', 'Fitting/Installation'),
+            ('FINAL', 'Final Inspection'),
+            ('COMPLETED', 'Completed'),
+        ],
+        default='MANUFACTURING'
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'equipment_batches'
+        verbose_name = 'Equipment Batch'
+        verbose_name_plural = 'Equipment Batches'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.batch_name} ({self.batch_uuid})"
+
+
 class OnlineInspection(models.Model):
     """
-    Online inspection records for each stage of manufacturing and supply.
+    Streamlined online inspection records for equipment batches.
     """
     INSPECTION_STATUS = [
         ('PENDING', 'Pending'),
@@ -72,15 +128,34 @@ class OnlineInspection(models.Model):
         ('REQUIRES_RETEST', 'Requires Retest'),
     ]
     
+    INSPECTION_SOURCES = [
+        ('VENDOR', 'Vendor Side'),
+        ('RAILWAY_AUTH', 'Railway Authority Side'),
+        ('WORKER', 'Worker Side'),
+    ]
+    
     # Basic Information
     inspection_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    equipment_batch = models.ForeignKey(
+        EquipmentBatch,
+        on_delete=models.CASCADE,
+        related_name='inspections',
+        null=True,
+        blank=True
+    )
     stage = models.ForeignKey(
         InspectionStage,
         on_delete=models.PROTECT,
         related_name='inspections'
     )
+    inspection_source = models.CharField(
+        max_length=20,
+        choices=INSPECTION_SOURCES,
+        help_text="Which side conducted this inspection",
+        default='VENDOR'
+    )
     
-    # Related Objects
+    # Related Objects (for backward compatibility)
     requirement = models.ForeignKey(
         Requirement,
         on_delete=models.CASCADE,
@@ -266,12 +341,13 @@ class OnlineInspection(models.Model):
 
 class InspectionPhoto(models.Model):
     """
-    Photos uploaded during online inspections.
+    Photos uploaded during streamlined inspections with QR code scanning.
     """
     PHOTO_TYPES = [
-        ('OVERVIEW', 'Overview Photo'),
-        ('DETAIL', 'Detail Photo'),
-        ('ISSUE', 'Issue Photo'),
+        ('EQUIPMENT_OVERVIEW', 'Equipment Overview'),
+        ('EQUIPMENT_DETAIL', 'Equipment Detail'),
+        ('QR_CODE', 'QR Code Scan'),
+        ('DEFECT', 'Defect Found'),
         ('COMPLETION', 'Completion Photo'),
         ('DOCUMENT', 'Document Photo'),
         ('OTHER', 'Other'),
@@ -285,7 +361,7 @@ class InspectionPhoto(models.Model):
     photo_type = models.CharField(
         max_length=20,
         choices=PHOTO_TYPES,
-        default='OVERVIEW'
+        default='EQUIPMENT_OVERVIEW'
     )
     image = models.ImageField(
         upload_to='inspections/photos/%Y/%m/%d/',
@@ -293,6 +369,10 @@ class InspectionPhoto(models.Model):
     )
     caption = models.CharField(max_length=200, blank=True)
     description = models.TextField(blank=True)
+    
+    # QR Code Data (if this photo contains a QR code)
+    qr_code_data = models.CharField(max_length=500, blank=True)
+    qr_code_uuid = models.UUIDField(null=True, blank=True)
     
     # AI Analysis Data
     ai_analysis = models.JSONField(
@@ -304,6 +384,14 @@ class InspectionPhoto(models.Model):
         default=list,
         blank=True,
         help_text="AI-generated tags for this photo"
+    )
+    ai_confidence_score = models.DecimalField(
+        max_digits=3,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0.0), MaxValueValidator(1.0)],
+        help_text="AI confidence score for this photo analysis"
     )
     
     # Upload Information
@@ -513,9 +601,96 @@ class AITrainingData(models.Model):
         return f"AI Training Data - {self.inspection} ({self.created_at})"
 
 
+class AISmartReport(models.Model):
+    """
+    AI-generated smart inspection reports for equipment batches.
+    """
+    REPORT_STATUS = [
+        ('PENDING', 'Pending'),
+        ('PROCESSING', 'Processing'),
+        ('COMPLETED', 'Completed'),
+        ('FAILED', 'Failed'),
+    ]
+    
+    equipment_batch = models.ForeignKey(
+        EquipmentBatch,
+        on_delete=models.CASCADE,
+        related_name='ai_reports'
+    )
+    
+    # Report Content
+    executive_summary = models.TextField()
+    quality_assessment = models.TextField()
+    defect_analysis = models.JSONField(
+        default=dict,
+        help_text="Analysis of defects found across all inspection stages"
+    )
+    stage_comparison = models.JSONField(
+        default=dict,
+        help_text="Comparison of quality across different stages"
+    )
+    recommendations = models.JSONField(
+        default=list,
+        help_text="AI-generated recommendations"
+    )
+    risk_assessment = models.JSONField(
+        default=dict,
+        help_text="Risk assessment data"
+    )
+    compliance_status = models.JSONField(
+        default=dict,
+        help_text="Compliance status with standards"
+    )
+    
+    # Data Sources
+    vendor_inspections = models.JSONField(
+        default=list,
+        help_text="Data from vendor-side inspections"
+    )
+    railway_auth_inspections = models.JSONField(
+        default=list,
+        help_text="Data from railway authority inspections"
+    )
+    worker_inspections = models.JSONField(
+        default=list,
+        help_text="Data from worker-side inspections"
+    )
+    
+    # AI Processing Information
+    ai_model_version = models.CharField(max_length=50)
+    confidence_score = models.DecimalField(
+        max_digits=3,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0.0), MaxValueValidator(1.0)],
+        help_text="AI confidence score (0-1)"
+    )
+    processing_time_seconds = models.IntegerField(null=True, blank=True)
+    
+    # Status and Timing
+    status = models.CharField(
+        max_length=20,
+        choices=REPORT_STATUS,
+        default='PENDING'
+    )
+    generated_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'ai_smart_reports'
+        verbose_name = 'AI Smart Report'
+        verbose_name_plural = 'AI Smart Reports'
+        ordering = ['-generated_at']
+    
+    def __str__(self):
+        return f"AI Smart Report - {self.equipment_batch} ({self.generated_at})"
+
+
 class InspectionSummary(models.Model):
     """
-    AI-generated summaries of inspections.
+    AI-generated summaries of individual inspections (legacy support).
     """
     inspection = models.OneToOneField(
         OnlineInspection,

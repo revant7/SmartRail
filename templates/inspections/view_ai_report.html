@@ -1,0 +1,364 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}AI Smart Report - {{ smart_report.equipment_batch.batch_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+    .report-section {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .section-title {
+        color: #667eea;
+        font-weight: bold;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #e9ecef;
+    }
+    .confidence-score {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        text-align: center;
+    }
+    .confidence-number {
+        font-size: 2.5em;
+        font-weight: bold;
+        color: #28a745;
+    }
+    .recommendation-item {
+        background: #e8f5e8;
+        border-left: 4px solid #28a745;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 0 8px 8px 0;
+    }
+    .risk-item {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 0 8px 8px 0;
+    }
+    .compliance-badge {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 14px;
+    }
+    .compliance-pass {
+        background: #d4edda;
+        color: #155724;
+    }
+    .compliance-fail {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    .stage-comparison {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+    }
+    .stage-card {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+    }
+    .stage-score {
+        font-size: 2em;
+        font-weight: bold;
+        color: #667eea;
+        margin-bottom: 10px;
+    }
+    .defect-analysis {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+    }
+    .defect-item {
+        background: white;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-left: 4px solid #dc3545;
+    }
+    .print-btn {
+        background: #6c757d;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: bold;
+    }
+    .print-btn:hover {
+        background: #5a6268;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Report Header -->
+    <div class="report-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="h2 mb-2">
+                    <i class="fas fa-brain"></i> AI Smart Report
+                </h1>
+                <h3 class="h4 mb-3">{{ smart_report.equipment_batch.batch_name }}</h3>
+                <p class="mb-0">
+                    <strong>Equipment Type:</strong> {{ smart_report.equipment_batch.equipment_type }}<br>
+                    <strong>Batch UUID:</strong> <code>{{ smart_report.equipment_batch.batch_uuid }}</code><br>
+                    <strong>Generated:</strong> {{ smart_report.generated_at|date:"F d, Y at H:i" }}
+                </p>
+            </div>
+            <div class="col-md-4 text-right">
+                <div class="confidence-score">
+                    <div class="confidence-number">{{ smart_report.confidence_score|floatformat:2 }}</div>
+                    <div class="text-muted">AI Confidence Score</div>
+                </div>
+                <div class="mt-3">
+                    <button type="button" class="btn btn-light" onclick="window.print()">
+                        <i class="fas fa-print"></i> Print Report
+                    </button>
+                    <a href="{% url 'inspections:ai_report_dashboard' %}" class="btn btn-light ml-2">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Executive Summary -->
+    <div class="report-section">
+        <h2 class="section-title">
+            <i class="fas fa-file-alt"></i> Executive Summary
+        </h2>
+        <div class="row">
+            <div class="col-12">
+                <p class="lead">{{ smart_report.executive_summary }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quality Assessment -->
+    <div class="report-section">
+        <h2 class="section-title">
+            <i class="fas fa-star"></i> Quality Assessment
+        </h2>
+        <div class="row">
+            <div class="col-12">
+                <p>{{ smart_report.quality_assessment }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stage Comparison -->
+    {% if smart_report.stage_comparison %}
+    <div class="report-section">
+        <h2 class="section-title">
+            <i class="fas fa-chart-bar"></i> Stage Comparison
+        </h2>
+        <div class="stage-comparison">
+            {% for stage, score in smart_report.stage_comparison.items %}
+            <div class="stage-card">
+                <div class="stage-score">{{ score }}</div>
+                <div class="text-muted">{{ stage|title }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Defect Analysis -->
+    {% if smart_report.defect_analysis %}
+    <div class="report-section">
+        <h2 class="section-title">
+            <i class="fas fa-exclamation-triangle"></i> Defect Analysis
+        </h2>
+        <div class="defect-analysis">
+            {% if smart_report.defect_analysis.total_defects %}
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h3 text-danger">{{ smart_report.defect_analysis.total_defects }}</div>
+                            <div class="text-muted">Total Defects</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h3 text-warning">{{ smart_report.defect_analysis.critical_defects }}</div>
+                            <div class="text-muted">Critical</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h3 text-info">{{ smart_report.defect_analysis.minor_defects }}</div>
+                            <div class="text-muted">Minor</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h3 text-success">{{ smart_report.defect_analysis.total_defects|add:"-"|add:smart_report.defect_analysis.critical_defects|add:"-"|add:smart_report.defect_analysis.minor_defects }}</div>
+                            <div class="text-muted">Other</div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if smart_report.defect_analysis.defect_locations %}
+                <h5>Defect Locations:</h5>
+                <ul>
+                    {% for location in smart_report.defect_analysis.defect_locations %}
+                    <li>{{ location }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                    <h5 class="text-success">No Defects Found</h5>
+                    <p class="text-muted">The equipment passed all quality checks across all inspection stages.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recommendations -->
+    {% if smart_report.recommendations %}
+    <div class="report-section">
+        <h2 class="section-title">
+            <i class="fas fa-lightbulb"></i> Recommendations
+        </h2>
+        <div class="row">
+            <div class="col-12">
+                {% for recommendation in smart_report.recommendations %}
+                <div class="recommendation-item">
+                    <i class="fas fa-arrow-right text-success mr-2"></i>
+                    {{ recommendation }}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Risk Assessment -->
+    {% if smart_report.risk_assessment %}
+    <div class="report-section">
+        <h2 class="section-title">
+            <i class="fas fa-shield-alt"></i> Risk Assessment
+        </h2>
+        <div class="row">
+            <div class="col-md-6">
+                <h5>Risk Level: 
+                    <span class="badge badge-{% if smart_report.risk_assessment.risk_level == 'LOW' %}success{% elif smart_report.risk_assessment.risk_level == 'MEDIUM' %}warning{% else %}danger{% endif %}">
+                        {{ smart_report.risk_assessment.risk_level }}
+                    </span>
+                </h5>
+                
+                {% if smart_report.risk_assessment.risk_factors %}
+                <h6>Risk Factors:</h6>
+                <ul>
+                    {% for factor in smart_report.risk_assessment.risk_factors %}
+                    <li>{{ factor }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+            <div class="col-md-6">
+                {% if smart_report.risk_assessment.mitigation_actions %}
+                <h6>Mitigation Actions:</h6>
+                <ul>
+                    {% for action in smart_report.risk_assessment.mitigation_actions %}
+                    <li>{{ action }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Compliance Status -->
+    {% if smart_report.compliance_status %}
+    <div class="report-section">
+        <h2 class="section-title">
+            <i class="fas fa-certificate"></i> Compliance Status
+        </h2>
+        <div class="row">
+            <div class="col-md-6">
+                <h5>Standards Compliance: 
+                    <span class="compliance-badge compliance-{% if smart_report.compliance_status.standards_compliant %}pass{% else %}fail{% endif %}">
+                        {% if smart_report.compliance_status.standards_compliant %}COMPLIANT{% else %}NON-COMPLIANT{% endif %}
+                    </span>
+                </h5>
+                
+                <p class="mt-3">
+                    <strong>Certification Status:</strong> 
+                    <span class="badge badge-info">{{ smart_report.compliance_status.certification_status }}</span>
+                </p>
+            </div>
+            <div class="col-md-6">
+                <div class="text-center">
+                    <div class="h2 text-primary">{{ smart_report.compliance_status.compliance_score }}%</div>
+                    <div class="text-muted">Compliance Score</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- AI Processing Information -->
+    <div class="report-section">
+        <h2 class="section-title">
+            <i class="fas fa-cogs"></i> AI Processing Information
+        </h2>
+        <div class="row">
+            <div class="col-md-4">
+                <strong>AI Model Version:</strong><br>
+                <span class="badge badge-secondary">{{ smart_report.ai_model_version }}</span>
+            </div>
+            <div class="col-md-4">
+                <strong>Processing Time:</strong><br>
+                {{ smart_report.processing_time_seconds }} seconds
+            </div>
+            <div class="col-md-4">
+                <strong>Report Status:</strong><br>
+                <span class="badge badge-success">{{ smart_report.get_status_display }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Add print styles
+    $('<style>')
+        .prop('type', 'text/css')
+        .html(`
+            @media print {
+                .btn, .no-print { display: none !important; }
+                .report-header { background: #667eea !important; }
+                .report-section { box-shadow: none !important; border: 1px solid #ddd !important; }
+            }
+        `)
+        .appendTo('head');
+});
+</script>
+{% endblock %}

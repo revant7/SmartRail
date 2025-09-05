@@ -1,0 +1,580 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Capture Inspection Photos{% endblock %}
+
+{% block extra_css %}
+<style>
+    .capture-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .photo-gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    .photo-item {
+        position: relative;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .photo-item img {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+    }
+    .photo-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 10px;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    .photo-item:hover .photo-overlay {
+        opacity: 1;
+    }
+    .photo-type-badge {
+        background: #667eea;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: bold;
+    }
+    .camera-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .camera-preview {
+        width: 100%;
+        height: 300px;
+        background: #000;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        position: relative;
+        overflow: hidden;
+    }
+    .camera-preview video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .camera-controls {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+    }
+    .btn-capture {
+        background: rgba(255,255,255,0.2);
+        border: 2px solid rgba(255,255,255,0.3);
+        color: white;
+        padding: 15px 30px;
+        border-radius: 50px;
+        font-weight: bold;
+        transition: all 0.3s;
+    }
+    .btn-capture:hover {
+        background: rgba(255,255,255,0.3);
+        border-color: rgba(255,255,255,0.5);
+        color: white;
+    }
+    .btn-capture:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    .inspection-info {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    .submission-section {
+        background: #e8f5e8;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+    .photo-counter {
+        background: #667eea;
+        color: white;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-camera"></i> Capture Inspection Photos
+                </h1>
+                <div class="photo-counter">
+                    <i class="fas fa-images"></i> {{ photos|length }} Photos
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inspection Information -->
+    <div class="inspection-info">
+        <div class="row">
+            <div class="col-md-6">
+                <h5 class="mb-2">{{ equipment_batch.batch_name }}</h5>
+                <p class="mb-1"><strong>Equipment Type:</strong> {{ equipment_batch.equipment_type }}</p>
+                <p class="mb-1"><strong>Current Stage:</strong> {{ equipment_batch.current_stage }}</p>
+            </div>
+            <div class="col-md-6">
+                <p class="mb-1"><strong>Inspection Stage:</strong> {{ inspection.stage.name }}</p>
+                <p class="mb-1"><strong>Source:</strong> {{ inspection.get_inspection_source_display }}</p>
+                <p class="mb-1"><strong>Status:</strong> 
+                    <span class="badge badge-{% if inspection.status == 'COMPLETED' %}success{% elif inspection.status == 'IN_PROGRESS' %}warning{% else %}secondary{% endif %}">
+                        {{ inspection.get_status_display }}
+                    </span>
+                </p>
+            </div>
+        </div>
+        <div class="mt-2">
+            <small class="text-muted">
+                <strong>Batch UUID:</strong> <code>{{ equipment_batch.batch_uuid }}</code>
+            </small>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Camera Section -->
+        <div class="col-lg-6">
+            <div class="camera-section">
+                <h4 class="mb-3">
+                    <i class="fas fa-camera"></i> Take Photos
+                </h4>
+                
+                <div class="camera-preview" id="camera-preview">
+                    <div class="d-flex align-items-center justify-content-center h-100">
+                        <div class="text-center">
+                            <i class="fas fa-camera fa-3x mb-3"></i>
+                            <p>Camera preview will appear here</p>
+                            <button type="button" class="btn btn-light" id="start-camera">
+                                <i class="fas fa-play"></i> Start Camera
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="camera-controls">
+                    <button type="button" class="btn btn-capture" id="capture-photo" disabled>
+                        <i class="fas fa-camera"></i> Capture Photo
+                    </button>
+                    <button type="button" class="btn btn-capture" id="stop-camera" disabled>
+                        <i class="fas fa-stop"></i> Stop Camera
+                    </button>
+                </div>
+                
+                <!-- Photo Type Selection -->
+                <div class="mt-3">
+                    <label class="text-white"><strong>Photo Type:</strong></label>
+                    <select class="form-control mt-1" id="photo-type">
+                        <option value="EQUIPMENT_OVERVIEW">Equipment Overview</option>
+                        <option value="EQUIPMENT_DETAIL">Equipment Detail</option>
+                        <option value="QR_CODE">QR Code Scan</option>
+                        <option value="DEFECT">Defect Found</option>
+                        <option value="COMPLETION">Completion Photo</option>
+                        <option value="OTHER">Other</option>
+                    </select>
+                </div>
+                
+                <!-- Caption -->
+                <div class="mt-3">
+                    <label class="text-white"><strong>Caption (Optional):</strong></label>
+                    <input type="text" class="form-control mt-1" id="photo-caption" 
+                           placeholder="Enter caption for this photo">
+                </div>
+            </div>
+        </div>
+
+        <!-- Photo Gallery -->
+        <div class="col-lg-6">
+            <div class="capture-container">
+                <h4 class="mb-3">
+                    <i class="fas fa-images"></i> Captured Photos
+                </h4>
+                
+                {% if photos %}
+                    <div class="photo-gallery" id="photo-gallery">
+                        {% for photo in photos %}
+                        <div class="photo-item" data-photo-id="{{ photo.id }}">
+                            <img src="{{ photo.image.url }}" alt="{{ photo.caption }}">
+                            <div class="photo-overlay">
+                                <div>
+                                    <span class="photo-type-badge">{{ photo.get_photo_type_display }}</span>
+                                </div>
+                                <div>
+                                    <p class="mb-1">{{ photo.caption|default:"No caption" }}</p>
+                                    <small>{{ photo.uploaded_at|date:"M d, H:i" }}</small>
+                                </div>
+                                <div class="text-right">
+                                    <button type="button" class="btn btn-sm btn-danger" 
+                                            onclick="deletePhoto({{ photo.id }})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-images fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No photos captured yet</h5>
+                        <p class="text-muted">Use the camera to capture inspection photos</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Submission Section -->
+    {% if inspection.status != 'COMPLETED' %}
+    <div class="submission-section">
+        <h4 class="mb-3">
+            <i class="fas fa-check-circle"></i> Submit Inspection
+        </h4>
+        
+        <form id="submission-form">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="inspection-result">Inspection Result</label>
+                        <select class="form-control" id="inspection-result" required>
+                            <option value="PASS">Pass</option>
+                            <option value="FAIL">Fail</option>
+                            <option value="CONDITIONAL_PASS">Conditional Pass</option>
+                            <option value="REQUIRES_RETEST">Requires Retest</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="quality-rating">Quality Rating (1-10)</label>
+                        <input type="number" class="form-control" id="quality-rating" 
+                               min="1" max="10" step="0.1" placeholder="8.5">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="findings">Findings</label>
+                <textarea class="form-control" id="findings" rows="3" 
+                          placeholder="Describe your findings..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="issues-found">Issues Found</label>
+                <textarea class="form-control" id="issues-found" rows="2" 
+                          placeholder="Describe any issues found..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="recommendations">Recommendations</label>
+                <textarea class="form-control" id="recommendations" rows="2" 
+                          placeholder="Provide recommendations..."></textarea>
+            </div>
+            
+            <div class="text-center">
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="fas fa-check"></i> Submit Inspection
+                </button>
+                <a href="{% url 'inspections:streamlined_home' %}" class="btn btn-secondary btn-lg ml-2">
+                    <i class="fas fa-arrow-left"></i> Back to Home
+                </a>
+            </div>
+        </form>
+    </div>
+    {% else %}
+    <div class="alert alert-success">
+        <h5><i class="fas fa-check-circle"></i> Inspection Completed</h5>
+        <p class="mb-0">This inspection has been completed. Result: <strong>{{ inspection.get_result_display }}</strong></p>
+        <div class="mt-2">
+            <a href="{% url 'inspections:streamlined_home' %}" class="btn btn-primary">
+                <i class="fas fa-arrow-left"></i> Back to Home
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Hidden file input for photo upload -->
+<input type="file" id="file-input" accept="image/*" style="display: none;">
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let cameraStream = null;
+let isCameraActive = false;
+
+$(document).ready(function() {
+    // Camera controls
+    $('#start-camera').click(startCamera);
+    $('#stop-camera').click(stopCamera);
+    $('#capture-photo').click(capturePhoto);
+    
+    // File input change
+    $('#file-input').change(function() {
+        const file = this.files[0];
+        if (file) {
+            uploadPhoto(file);
+        }
+    });
+    
+    // Submission form
+    $('#submission-form').submit(function(e) {
+        e.preventDefault();
+        submitInspection();
+    });
+});
+
+function startCamera() {
+    navigator.mediaDevices.getUserMedia({ 
+        video: { 
+            facingMode: 'environment',
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+        } 
+    })
+    .then(function(stream) {
+        cameraStream = stream;
+        const video = document.createElement('video');
+        video.srcObject = stream;
+        video.play();
+        
+        const preview = document.getElementById('camera-preview');
+        preview.innerHTML = '';
+        preview.appendChild(video);
+        
+        isCameraActive = true;
+        $('#start-camera').prop('disabled', true);
+        $('#stop-camera').prop('disabled', false);
+        $('#capture-photo').prop('disabled', false);
+    })
+    .catch(function(err) {
+        console.error('Error accessing camera:', err);
+        alert('Unable to access camera. Please use file upload instead.');
+    });
+}
+
+function stopCamera() {
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+    }
+    
+    const preview = document.getElementById('camera-preview');
+    preview.innerHTML = `
+        <div class="d-flex align-items-center justify-content-center h-100">
+            <div class="text-center">
+                <i class="fas fa-camera fa-3x mb-3"></i>
+                <p>Camera preview will appear here</p>
+                <button type="button" class="btn btn-light" id="start-camera">
+                    <i class="fas fa-play"></i> Start Camera
+                </button>
+            </div>
+        </div>
+    `;
+    
+    isCameraActive = false;
+    $('#start-camera').prop('disabled', false);
+    $('#stop-camera').prop('disabled', true);
+    $('#capture-photo').prop('disabled', true);
+    
+    // Re-bind event listener
+    $('#start-camera').click(startCamera);
+}
+
+function capturePhoto() {
+    if (!isCameraActive) return;
+    
+    const video = document.querySelector('#camera-preview video');
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    context.drawImage(video, 0, 0);
+    
+    canvas.toBlob(function(blob) {
+        const file = new File([blob], 'captured-photo.jpg', { type: 'image/jpeg' });
+        uploadPhoto(file);
+    }, 'image/jpeg', 0.8);
+}
+
+function uploadPhoto(file) {
+    const formData = new FormData();
+    formData.append('photo', file);
+    formData.append('photo_type', $('#photo-type').val());
+    formData.append('caption', $('#photo-caption').val());
+    formData.append('csrfmiddlewaretoken', $('[name=csrfmiddlewaretoken]').val());
+    
+    $.ajax({
+        url: '{% url "inspections:upload_streamlined_photo" inspection.inspection_id %}',
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+            if (response.success) {
+                // Add photo to gallery
+                addPhotoToGallery(response);
+                // Clear form
+                $('#photo-caption').val('');
+                // Show success message
+                showNotification('Photo uploaded successfully!', 'success');
+            } else {
+                showNotification('Error uploading photo: ' + response.message, 'error');
+            }
+        },
+        error: function() {
+            showNotification('Error uploading photo', 'error');
+        }
+    });
+}
+
+function addPhotoToGallery(photoData) {
+    const gallery = document.getElementById('photo-gallery');
+    if (!gallery) {
+        // Create gallery if it doesn't exist
+        const container = document.querySelector('.capture-container');
+        const galleryHtml = `
+            <h4 class="mb-3">
+                <i class="fas fa-images"></i> Captured Photos
+            </h4>
+            <div class="photo-gallery" id="photo-gallery"></div>
+        `;
+        container.innerHTML = galleryHtml;
+    }
+    
+    const photoHtml = `
+        <div class="photo-item" data-photo-id="${photoData.photo_id}">
+            <img src="${photoData.photo_url}" alt="${photoData.caption}">
+            <div class="photo-overlay">
+                <div>
+                    <span class="photo-type-badge">${photoData.photo_type}</span>
+                </div>
+                <div>
+                    <p class="mb-1">${photoData.caption || 'No caption'}</p>
+                    <small>Just now</small>
+                </div>
+                <div class="text-right">
+                    <button type="button" class="btn btn-sm btn-danger" 
+                            onclick="deletePhoto(${photoData.photo_id})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('photo-gallery').insertAdjacentHTML('beforeend', photoHtml);
+    
+    // Update photo counter
+    const counter = document.querySelector('.photo-counter');
+    const currentCount = parseInt(counter.textContent.match(/\d+/)[0]);
+    counter.innerHTML = `<i class="fas fa-images"></i> ${currentCount + 1} Photos`;
+}
+
+function deletePhoto(photoId) {
+    if (!confirm('Are you sure you want to delete this photo?')) return;
+    
+    $.ajax({
+        url: `/inspections/api/photo/${photoId}/delete/`,
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+        },
+        success: function(response) {
+            if (response.success) {
+                $(`[data-photo-id="${photoId}"]`).remove();
+                showNotification('Photo deleted successfully!', 'success');
+                
+                // Update photo counter
+                const counter = document.querySelector('.photo-counter');
+                const currentCount = parseInt(counter.textContent.match(/\d+/)[0]);
+                counter.innerHTML = `<i class="fas fa-images"></i> ${currentCount - 1} Photos`;
+            } else {
+                showNotification('Error deleting photo: ' + response.message, 'error');
+            }
+        },
+        error: function() {
+            showNotification('Error deleting photo', 'error');
+        }
+    });
+}
+
+function submitInspection() {
+    const formData = {
+        result: $('#inspection-result').val(),
+        findings: $('#findings').val(),
+        issues_found: $('#issues-found').val(),
+        recommendations: $('#recommendations').val(),
+        csrfmiddlewaretoken: $('[name=csrfmiddlewaretoken]').val()
+    };
+    
+    $.ajax({
+        url: '{% url "inspections:submit_streamlined_inspection" inspection.inspection_id %}',
+        method: 'POST',
+        data: formData,
+        success: function(response) {
+            if (response.success) {
+                showNotification('Inspection submitted successfully!', 'success');
+                setTimeout(function() {
+                    window.location.href = '{% url "inspections:streamlined_home" %}';
+                }, 2000);
+            } else {
+                showNotification('Error submitting inspection: ' + response.message, 'error');
+            }
+        },
+        error: function() {
+            showNotification('Error submitting inspection', 'error');
+        }
+    });
+}
+
+function showNotification(message, type) {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const notification = $(`
+        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        </div>
+    `);
+    
+    $('body').prepend(notification);
+    
+    setTimeout(function() {
+        notification.alert('close');
+    }, 5000);
+}
+</script>
+{% endblock %}

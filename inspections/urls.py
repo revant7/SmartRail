@@ -2,7 +2,7 @@
 URL patterns for inspections app.
 """
 from django.urls import path
-from . import views
+from . import views, streamlined_views, ai_views
 
 app_name = 'inspections'
 
@@ -29,8 +29,29 @@ urlpatterns = [
     path('stages/', views.inspection_stages, name='inspection_stages'),
     path('<uuid:inspection_id>/ai-summary/', views.ai_summary, name='ai_summary'),
     
+    # Streamlined Inspection System
+    path('streamlined/', streamlined_views.streamlined_inspection_home, name='streamlined_home'),
+    path('streamlined/start/', streamlined_views.start_streamlined_inspection, name='start_streamlined_inspection'),
+    path('streamlined/<uuid:inspection_id>/capture/', streamlined_views.streamlined_capture, name='streamlined_capture'),
+    path('streamlined/qr-scanner/', streamlined_views.qr_code_scanner, name='qr_scanner'),
+    path('streamlined/qr-generator/', streamlined_views.qr_code_generator, name='qr_generator'),
+    path('streamlined/qr-code/<uuid:batch_uuid>/', streamlined_views.generate_qr_code, name='generate_qr_code'),
+    path('streamlined/ai-reports/', streamlined_views.ai_report_dashboard, name='ai_report_dashboard'),
+    path('streamlined/ai-reports/<int:report_id>/', streamlined_views.view_ai_report, name='view_ai_report'),
+    
+    # AI Integration Endpoints
+    path('ai/send-data/<uuid:batch_uuid>/', ai_views.send_inspection_data_to_ai, name='send_inspection_data_to_ai'),
+    path('ai/report/<int:report_id>/', ai_views.get_ai_report, name='get_ai_report'),
+    path('ai/batch-summary/<uuid:batch_uuid>/', ai_views.get_batch_inspection_summary, name='get_batch_inspection_summary'),
+    path('ai/receive-report/', ai_views.receive_ai_report, name='receive_ai_report'),
+    
     # AJAX endpoints
     path('api/<uuid:inspection_id>/upload-photo/', views.upload_photo_ajax, name='upload_photo_ajax'),
     path('api/photo/<int:photo_id>/delete/', views.delete_photo_ajax, name='delete_photo_ajax'),
     path('api/<uuid:inspection_id>/data/', views.get_inspection_data_ajax, name='get_inspection_data_ajax'),
+    
+    # Streamlined AJAX endpoints
+    path('api/streamlined/<uuid:inspection_id>/upload-photo/', streamlined_views.upload_streamlined_photo, name='upload_streamlined_photo'),
+    path('api/streamlined/<uuid:inspection_id>/submit/', streamlined_views.submit_streamlined_inspection, name='submit_streamlined_inspection'),
+    path('api/streamlined/process-qr/', streamlined_views.process_qr_code, name='process_qr_code'),
 ]

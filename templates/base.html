@@ -220,9 +220,24 @@
                             </a>
                         </li>
                         
+                        <!-- Streamlined Inspection System -->
                         <li class="nav-item">
-                            <a class="nav-link {% if 'inspection' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'inspections:dashboard' %}">
-                                <i class="bi bi-clipboard-check"></i> Online Inspections
+                            <a class="nav-link {% if 'streamlined' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'inspections:streamlined_home' %}">
+                                <i class="bi bi-camera"></i> Smart Inspections
+                            </a>
+                        </li>
+                        
+                        <!-- Legacy Inspection System -->
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'inspection' in request.resolver_match.url_name and 'streamlined' not in request.resolver_match.url_name %}active{% endif %}" href="{% url 'inspections:dashboard' %}">
+                                <i class="bi bi-clipboard-check"></i> Legacy Inspections
+                            </a>
+                        </li>
+                        
+                        <!-- AI Reports -->
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'ai-report' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'inspections:ai_report_dashboard' %}">
+                                <i class="bi bi-brain"></i> AI Reports
                             </a>
                         </li>
                         

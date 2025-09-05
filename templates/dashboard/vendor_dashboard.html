@@ -6,9 +6,32 @@
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">Vendor Dashboard</h1>
     <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'inspections:streamlined_home' %}" class="btn btn-success me-2">
+            <i class="bi bi-camera"></i> Smart Inspections
+        </a>
         <a href="{% url 'railway:requirement_list' %}" class="btn btn-primary">
             <i class="bi bi-search"></i> Browse Requirements
         </a>
+    </div>
+</div>
+
+<!-- Quick Access to Smart Inspections -->
+<div class="alert alert-info border-0 shadow-sm mb-4">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h5 class="alert-heading mb-2">
+                <i class="bi bi-camera text-info"></i> Smart Inspection System
+            </h5>
+            <p class="mb-0">
+                Conduct inspections easily! Scan QR codes, take photos of your equipment, and submit. 
+                AI will generate comprehensive quality reports.
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{% url 'inspections:start_streamlined_inspection' %}" class="btn btn-info btn-lg">
+                <i class="bi bi-camera"></i> Start Inspection
+            </a>
+        </div>
     </div>
 </div>
 

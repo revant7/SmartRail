@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Streamlined Inspection System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .inspection-card {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+    .status-pending { background-color: #fff3cd; color: #856404; }
+    .status-in-progress { background-color: #d1ecf1; color: #0c5460; }
+    .status-completed { background-color: #d4edda; color: #155724; }
+    .status-failed { background-color: #f8d7da; color: #721c24; }
+    .quick-action-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: bold;
+        text-decoration: none;
+        display: inline-block;
+        margin: 10px;
+        transition: transform 0.2s;
+    }
+    .quick-action-btn:hover {
+        transform: translateY(-2px);
+        color: white;
+        text-decoration: none;
+    }
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .stats-number {
+        font-size: 2.5em;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .stats-label {
+        font-size: 14px;
+        opacity: 0.9;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-1">
+                        <i class="fas fa-camera text-primary"></i> Smart Inspection System
+                    </h1>
+                    <p class="text-muted mb-0">New streamlined workflow - Just scan QR code, take photos, and submit!</p>
+                </div>
+                <div>
+                    <a href="{% url 'inspections:start_streamlined_inspection' %}" class="quick-action-btn">
+                        <i class="fas fa-camera"></i> Start New Inspection
+                    </a>
+                    <a href="{% url 'inspections:qr_scanner' %}" class="quick-action-btn">
+                        <i class="fas fa-qrcode"></i> QR Scanner
+                    </a>
+                    <a href="{% url 'inspections:qr_generator' %}" class="quick-action-btn">
+                        <i class="fas fa-download"></i> QR Generator
+                    </a>
+                </div>
+            </div>
+            
+            <!-- New System Banner -->
+            <div class="alert alert-info border-0 shadow-sm mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h5 class="alert-heading mb-2">
+                            <i class="fas fa-star text-warning"></i> New Smart Inspection System
+                        </h5>
+                        <p class="mb-0">
+                            This is the new streamlined inspection system! Simply scan the equipment QR code, 
+                            take photos, and submit. AI will automatically generate comprehensive reports.
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <a href="{% url 'inspections:start_streamlined_inspection' %}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-play"></i> Try It Now
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ recent_inspections|length }}</div>
+                <div class="stats-label">Recent Inspections</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ available_stages|length }}</div>
+                <div class="stats-label">Available Stages</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ user_type }}</div>
+                <div class="stats-label">User Type</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <a href="{% url 'inspections:ai_report_dashboard' %}" style="color: white; text-decoration: none;">
+                    <div class="stats-number"><i class="fas fa-brain"></i></div>
+                    <div class="stats-label">AI Reports</div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Inspections -->
+    <div class="row">
+        <div class="col-12">
+            <div class="inspection-card">
+                <h4 class="mb-3">
+                    <i class="fas fa-history"></i> Recent Inspections
+                </h4>
+                
+                {% if recent_inspections %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Equipment Batch</th>
+                                    <th>Stage</th>
+                                    <th>Source</th>
+                                    <th>Status</th>
+                                    <th>Result</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for inspection in recent_inspections %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ inspection.equipment_batch.batch_name }}</strong><br>
+                                        <small class="text-muted">{{ inspection.equipment_batch.batch_uuid }}</small>
+                                    </td>
+                                    <td>{{ inspection.stage.name }}</td>
+                                    <td>
+                                        <span class="badge badge-info">
+                                            {{ inspection.get_inspection_source_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge status-{{ inspection.status|lower }}">
+                                            {{ inspection.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if inspection.result %}
+                                            <span class="badge badge-{% if inspection.result == 'PASS' %}success{% elif inspection.result == 'FAIL' %}danger{% else %}warning{% endif %}">
+                                                {{ inspection.get_result_display }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ inspection.inspection_date|date:"M d, Y H:i" }}</td>
+                                    <td>
+                                        <a href="{% url 'inspections:streamlined_capture' inspection.inspection_id %}" 
+                                           class="btn btn-sm btn-primary">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No recent inspections</h5>
+                        <p class="text-muted">Start your first streamlined inspection to see it here.</p>
+                        <a href="{% url 'inspections:start_streamlined_inspection' %}" class="btn btn-primary">
+                            <i class="fas fa-camera"></i> Start Inspection
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Available Stages -->
+    <div class="row">
+        <div class="col-12">
+            <div class="inspection-card">
+                <h4 class="mb-3">
+                    <i class="fas fa-list"></i> Available Inspection Stages
+                </h4>
+                
+                <div class="row">
+                    {% for stage in available_stages %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="card-title">{{ stage.name }}</h6>
+                                <p class="card-text text-muted">{{ stage.description }}</p>
+                                <small class="text-muted">
+                                    Type: {{ stage.get_stage_type_display }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Auto-refresh recent inspections every 30 seconds
+    setInterval(function() {
+        // You can add AJAX refresh logic here if needed
+    }, 30000);
+});
+</script>
+{% endblock %}

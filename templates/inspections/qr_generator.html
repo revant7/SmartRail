@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}QR Code Generator{% endblock %}
+
+{% block extra_css %}
+<style>
+    .qr-generator-card {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .qr-preview {
+        text-align: center;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    .qr-image {
+        max-width: 200px;
+        height: auto;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+    }
+    .batch-card {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        background: white;
+        transition: box-shadow 0.2s;
+    }
+    .batch-card:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .batch-uuid {
+        font-family: monospace;
+        background: #f8f9fa;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+    }
+    .qr-size-selector {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    .download-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: bold;
+        text-decoration: none;
+        display: inline-block;
+        margin: 5px;
+        transition: transform 0.2s;
+    }
+    .download-btn:hover {
+        transform: translateY(-2px);
+        color: white;
+        text-decoration: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-qrcode"></i> QR Code Generator
+                </h1>
+                <div>
+                    <a href="{% url 'inspections:streamlined_home' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Inspections
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="qr-generator-card">
+        <h4 class="mb-3">
+            <i class="fas fa-info-circle"></i> How to Use QR Codes
+        </h4>
+        <div class="row">
+            <div class="col-md-6">
+                <h6>For Equipment:</h6>
+                <ol>
+                    <li>Generate QR code for your equipment batch</li>
+                    <li>Print and attach to equipment</li>
+                    <li>Use QR scanner during inspections</li>
+                </ol>
+            </div>
+            <div class="col-md-6">
+                <h6>For Inspections:</h6>
+                <ol>
+                    <li>Scan QR code with mobile device</li>
+                    <li>Automatically identifies equipment batch</li>
+                    <li>Start inspection with pre-filled data</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR Size Selector -->
+    <div class="qr-size-selector">
+        <h5 class="mb-3">QR Code Size</h5>
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-outline-primary qr-size-btn active" data-size="150">Small (150px)</button>
+            <button type="button" class="btn btn-outline-primary qr-size-btn" data-size="200">Medium (200px)</button>
+            <button type="button" class="btn btn-outline-primary qr-size-btn" data-size="300">Large (300px)</button>
+            <button type="button" class="btn btn-outline-primary qr-size-btn" data-size="400">Extra Large (400px)</button>
+        </div>
+    </div>
+
+    <!-- Equipment Batches -->
+    <div class="row">
+        <div class="col-12">
+            <h4 class="mb-3">
+                <i class="fas fa-list"></i> Equipment Batches
+            </h4>
+            
+            {% if equipment_batches %}
+                {% for batch in equipment_batches %}
+                <div class="batch-card">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h6 class="mb-1">{{ batch.batch_name }}</h6>
+                            <p class="mb-1 text-muted">
+                                <strong>Type:</strong> {{ batch.equipment_type }}<br>
+                                <strong>Manufacturer:</strong> {{ batch.manufacturer|default:"Not specified" }}<br>
+                                <strong>Model:</strong> {{ batch.model_number|default:"Not specified" }}
+                            </p>
+                            <div class="batch-uuid">{{ batch.batch_uuid }}</div>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <div class="qr-preview" id="qr-preview-{{ batch.id }}">
+                                <img src="{% url 'inspections:generate_qr_code' batch.batch_uuid %}?size=200" 
+                                     class="qr-image" alt="QR Code">
+                                <p class="mt-2 mb-0"><small>QR Code Preview</small></p>
+                            </div>
+                            <div class="mt-2">
+                                <a href="{% url 'inspections:generate_qr_code' batch.batch_uuid %}?size=150" 
+                                   class="download-btn" data-size="150">Small</a>
+                                <a href="{% url 'inspections:generate_qr_code' batch.batch_uuid %}?size=200" 
+                                   class="download-btn" data-size="200">Medium</a>
+                                <a href="{% url 'inspections:generate_qr_code' batch.batch_uuid %}?size=300" 
+                                   class="download-btn" data-size="300">Large</a>
+                                <a href="{% url 'inspections:generate_qr_code' batch.batch_uuid %}?size=400" 
+                                   class="download-btn" data-size="400">XL</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-qrcode fa-4x text-muted mb-4"></i>
+                    <h4 class="text-muted">No Equipment Batches Found</h4>
+                    <p class="text-muted mb-4">Create equipment batches first to generate QR codes.</p>
+                    <a href="{% url 'inspections:start_streamlined_inspection' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create Equipment Batch
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // QR size selector
+    $('.qr-size-btn').click(function() {
+        $('.qr-size-btn').removeClass('active');
+        $(this).addClass('active');
+        
+        const size = $(this).data('size');
+        updateAllQRCodes(size);
+    });
+    
+    // Update QR code previews
+    function updateAllQRCodes(size) {
+        $('.qr-image').each(function() {
+            const currentSrc = $(this).attr('src');
+            const newSrc = currentSrc.replace(/size=\d+/, `size=${size}`);
+            $(this).attr('src', newSrc);
+        });
+        
+        // Update download links
+        $('.download-btn').each(function() {
+            const currentHref = $(this).attr('href');
+            const newHref = currentHref.replace(/size=\d+/, `size=${size}`);
+            $(this).attr('href', newHref);
+        });
+    }
+    
+    // Auto-refresh QR codes every 30 seconds (in case of updates)
+    setInterval(function() {
+        // You can add auto-refresh logic here if needed
+    }, 30000);
+});
+</script>
+{% endblock %}
