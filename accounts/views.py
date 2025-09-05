@@ -28,7 +28,7 @@ def register_view(request):
     User registration view.
     """
     if request.user.is_authenticated:
-        return redirect('core:dashboard')
+        return redirect('dashboard:dashboard')
     
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
@@ -52,7 +52,7 @@ def login_view(request):
     User login view.
     """
     if request.user.is_authenticated:
-        return redirect('core:dashboard')
+        return redirect('dashboard:dashboard')
     
     if request.method == 'POST':
         form = CustomAuthenticationForm(request, data=request.POST)
@@ -72,7 +72,7 @@ def login_view(request):
                         user_agent=request.META.get('HTTP_USER_AGENT', '')
                     )
                     messages.success(request, f'Welcome back, {user.get_full_name()}!')
-                    return redirect('core:dashboard')
+                    return redirect('dashboard:dashboard')
                 else:
                     messages.error(request, 'Your account is inactive.')
             else:
@@ -158,7 +158,7 @@ def user_list_view(request):
     """
     if not (request.user.is_admin() or request.user.is_railway_authority()):
         messages.error(request, 'You do not have permission to view this page.')
-        return redirect('core:dashboard')
+        return redirect('dashboard:dashboard')
     
     users = User.objects.all().order_by('-date_joined')
     
@@ -198,7 +198,7 @@ def user_detail_view(request, user_id):
     """
     if not (request.user.is_admin() or request.user.is_railway_authority()):
         messages.error(request, 'You do not have permission to view this page.')
-        return redirect('core:dashboard')
+        return redirect('dashboard:dashboard')
     
     user = get_object_or_404(User, id=user_id)
     user_profile = get_object_or_404(UserProfile, user=user)

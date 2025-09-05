@@ -1,80 +1,52 @@
-# QRAIL - Railway Parts Tracking System
+# QRailway - Railway Management System
 
-A comprehensive Django-based web application for tracking railway parts using QR codes. This system enables railway employees to scan QR codes engraved on parts to access detailed information about each component.
+A comprehensive Django-based railway management system that facilitates requirement management, vendor bidding, and equipment tracking through QR codes.
 
 ## Features
 
-### 🔐 User Authentication & Authorization
-- **Multi-role system**: Railway employees, authorities, vendors, admins, inspectors, and managers
-- **Role-based access control**: Different permissions for different user types
-- **Secure authentication**: Session management with security features
-- **User profile management**: Extended profiles with role-specific information
+### User Types
+- **Railway Authority**: Create and manage requirements, assign vendors, track progress
+- **Vendor**: Browse requirements, submit bids, manage assigned projects
+- **Railway Worker**: Inspect equipment, perform installations, update status
+- **Software Staff**: System administration, monitoring, and support
 
-### 📦 Parts Management
-- **Comprehensive part database**: Track all railway components with detailed specifications
-- **QR code integration**: Automatic QR code generation for each part
-- **Category management**: Organize parts by categories and subcategories
-- **Document management**: Attach manuals, certificates, and other documents
-- **Image gallery**: Store and manage part images
-- **Maintenance tracking**: Record maintenance activities and schedules
+### Core Functionality
+- **Requirement Management**: Create, track, and manage railway equipment requirements
+- **Vendor Bidding System**: Vendors can submit proposals for requirements
+- **QR Code Integration**: Generate and scan QR codes for equipment tracking
+- **Status Tracking**: Track requirements through multiple stages (Inactive → Shipped → Received → Active)
+- **Notification System**: Real-time alerts and reminders for deadlines and status changes
+- **Inspection Management**: Record inspections at different stages
+- **Location-based Access**: Zone and division-based access control
 
-### 🛒 Order Management
-- **Project-based organization**: Group orders by railway projects
-- **Vendor management**: Maintain vendor information and performance metrics
-- **Purchase order workflow**: Complete order lifecycle from creation to delivery
-- **Line item tracking**: Detailed tracking of individual items in orders
-- **Status management**: Track order progress through various stages
-- **Document management**: Store order-related documents
-
-### 📍 Tracking & Monitoring
-- **Real-time tracking**: Track part locations and status changes
-- **Inspection records**: Comprehensive inspection management
-- **Quality checks**: Quality assurance and compliance tracking
-- **Alert system**: Automated alerts for maintenance, inspections, and issues
-- **Audit logging**: Complete audit trail of all system activities
-
-### 📱 QR Code Scanner
-- **Web-based scanner**: Built-in QR code scanner using device camera
-- **Mobile-friendly**: Responsive design for mobile devices
-- **Instant lookup**: Real-time part information retrieval
-- **Scan history**: Track recent scans for quick access
-
-### 🎨 Modern UI/UX
-- **Responsive design**: Works on desktop, tablet, and mobile devices
-- **Bootstrap 5**: Modern, clean interface
-- **Interactive dashboard**: Real-time statistics and recent activities
-- **Intuitive navigation**: Easy-to-use interface for all user types
-
-## Technology Stack
-
-- **Backend**: Django 4.2, Django REST Framework
-- **Database**: PostgreSQL
-- **Cache**: Redis
-- **Task Queue**: Celery
-- **Frontend**: Bootstrap 5, HTML5, CSS3, JavaScript
-- **QR Code**: html5-qrcode library
-- **Deployment**: Docker, Nginx, Gunicorn
+### Technical Features
+- **Modern UI**: Bootstrap 5 responsive design
+- **Real-time Notifications**: Email, SMS, and in-app notifications
+- **API Endpoints**: RESTful APIs for mobile integration and QR scanning
+- **Background Tasks**: Celery for scheduled notifications and alerts
+- **Security**: Role-based access control and audit logging
+- **Scalability**: Production-ready with Redis caching and PostgreSQL
 
 ## Installation
 
 ### Prerequisites
-- Python 3.11+
+- Python 3.8+
 - PostgreSQL 12+
 - Redis 6+
-- Docker (optional)
+- Node.js (for frontend assets)
 
-### Local Development Setup
+### Setup
 
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd qrail
+   cd QRailway/QRAILWAY
    ```
 
 2. **Create virtual environment**
    ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   python -m venv ../venv
+   source ../venv/bin/activate  # On Windows: ..\venv\Scripts\activate
    ```
 
 3. **Install dependencies**
@@ -82,177 +54,245 @@ A comprehensive Django-based web application for tracking railway parts using QR
    pip install -r requirements.txt
    ```
 
-4. **Environment configuration**
+4. **Environment Configuration**
    ```bash
    cp env.example .env
-   # Edit .env with your configuration
+   # Edit .env with your database and Redis credentials
    ```
 
-5. **Database setup**
+5. **Database Setup**
    ```bash
    python manage.py migrate
    python manage.py createsuperuser
+   python manage.py create_initial_data
    ```
 
-6. **Run development server**
+6. **Static Files**
    ```bash
+   python manage.py collectstatic
+   ```
+
+7. **Start Services**
+   ```bash
+   # Start Django development server
    python manage.py runserver
-   ```
-
-### Docker Setup
-
-1. **Build and run with Docker Compose**
-   ```bash
-   docker-compose up --build
-   ```
-
-2. **Run migrations**
-   ```bash
-   docker-compose exec web python manage.py migrate
-   docker-compose exec web python manage.py createsuperuser
+   
+   # Start Celery worker (in another terminal)
+   celery -A qrail worker -l info
+   
+   # Start Celery beat (in another terminal)
+   celery -A qrail beat -l info
+   
+   # Start Redis (if not running)
+   redis-server
    ```
 
 ## Configuration
 
 ### Environment Variables
-
-Create a `.env` file with the following variables:
-
 ```env
-# Django Settings
-SECRET_KEY=your-secret-key-here
+SECRET_KEY=your-secret-key
 DEBUG=True
 ALLOWED_HOSTS=localhost,127.0.0.1
 
-# Database Configuration
-DB_NAME=qrail_db
+# Database
+DB_NAME=qrailway
 DB_USER=postgres
-DB_PASSWORD=your-password
+DB_PASSWORD=password
 DB_HOST=localhost
 DB_PORT=5432
 
-# Redis Configuration
+# Redis
 REDIS_URL=redis://localhost:6379/0
 
-# Email Configuration
-EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+# Email (optional)
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_USE_TLS=True
 EMAIL_HOST_USER=your-email@gmail.com
 EMAIL_HOST_PASSWORD=your-app-password
 DEFAULT_FROM_EMAIL=noreply@qrail.com
-
-# AWS S3 Configuration (for production)
-AWS_ACCESS_KEY_ID=your-access-key
-AWS_SECRET_ACCESS_KEY=your-secret-key
-AWS_STORAGE_BUCKET_NAME=your-bucket-name
-AWS_S3_REGION_NAME=us-east-1
 ```
 
-## Usage
+### User Types and Permissions
 
-### User Roles
+#### Railway Authority
+- Create and manage requirements
+- Assign vendors to requirements
+- Approve/reject vendor requests
+- Update requirement status
+- View all requirements in their zone/division
 
-1. **System Administrator**: Full system access, user management
-2. **Railway Authority**: Oversight, approval workflows, user management
-3. **Railway Employee**: Part management, order creation, scanning
-4. **Vendor**: Order management, delivery tracking
-5. **Quality Inspector**: Inspection management, quality checks
-6. **Project Manager**: Project oversight, order management
+#### Vendor
+- Browse available requirements
+- Submit bids for requirements
+- View assigned requirements
+- Update status of assigned requirements
+- Access to vendor-specific dashboard
 
-### Key Workflows
+#### Railway Worker
+- View requirements in their zone/division
+- Conduct inspections
+- Update installation status
+- Upload inspection photos and reports
 
-#### Part Management
-1. Create parts with detailed specifications
-2. Generate QR codes automatically
-3. Track maintenance and inspections
-4. Update location and status information
+#### Software Staff
+- Full system access
+- User management
+- System monitoring
+- Database administration
 
-#### Order Management
-1. Create projects for organizing orders
-2. Add vendors and manage vendor information
-3. Create purchase orders with line items
-4. Track order status through approval and delivery
+## API Endpoints
 
-#### QR Code Scanning
-1. Use the built-in scanner or mobile app
-2. Scan QR codes to instantly access part information
-3. View maintenance history and upcoming inspections
-4. Update part status and location
+### Authentication
+- `POST /api/auth/login/` - User login
+- `POST /api/auth/logout/` - User logout
+- `GET /api/auth/user/` - Get current user info
 
-## API Documentation
+### Requirements
+- `GET /api/requirements/` - List requirements
+- `POST /api/requirements/` - Create requirement
+- `GET /api/requirements/{id}/` - Get requirement details
+- `PUT /api/requirements/{id}/` - Update requirement
+- `DELETE /api/requirements/{id}/` - Delete requirement
 
-The system provides a comprehensive REST API for mobile applications and integrations:
+### QR Code Scanning
+- `GET /api/scan/{uuid}/` - Scan QR code and get requirement info
 
-- **Authentication**: Token-based authentication
-- **Parts API**: CRUD operations for parts management
-- **Orders API**: Order management and tracking
-- **QR Code API**: Part lookup by QR code
-- **Tracking API**: Real-time tracking and monitoring
+### Notifications
+- `GET /api/notifications/` - List user notifications
+- `POST /api/notifications/{id}/read/` - Mark notification as read
 
-## Security Features
+## QR Code System
 
-- **HTTPS enforcement**: SSL/TLS encryption
-- **CSRF protection**: Cross-site request forgery protection
-- **XSS protection**: Cross-site scripting prevention
-- **Rate limiting**: API and login rate limiting
-- **Session security**: Secure session management
-- **Input validation**: Comprehensive input sanitization
-- **Audit logging**: Complete activity tracking
+### QR Code Generation
+- Each requirement gets a unique UUID
+- QR codes contain requirement information and API endpoint
+- Generated automatically when requirement is created
+- Stored as images in the media directory
 
-## Performance Optimizations
+### QR Code Scanning
+- Mobile-friendly API endpoint for scanning
+- Returns requirement details and current status
+- Logs scan events for analytics
+- Supports both authenticated and anonymous scanning
 
-- **Database indexing**: Optimized database queries
-- **Caching**: Redis-based caching for improved performance
-- **Static file optimization**: CDN-ready static file serving
-- **Image optimization**: Automatic image compression
-- **Database connection pooling**: Efficient database connections
+## Notification System
+
+### Types of Notifications
+- **New Requirement**: Notify vendors about new requirements
+- **Requirement Assigned**: Notify vendor when assigned
+- **Deadline Reminders**: Alert about approaching deadlines
+- **Status Changes**: Notify about requirement status updates
+- **Inspection Due**: Remind about pending inspections
+
+### Delivery Methods
+- **In-app**: Real-time notifications in the web interface
+- **Email**: Configurable frequency (immediate, daily, weekly)
+- **SMS**: Optional SMS notifications (requires SMS service)
+- **Push**: Browser push notifications
+
+### Scheduling
+- Daily deadline reminders (7, 3, 1 days before deadline)
+- Overdue notifications
+- Daily and weekly digest emails
+- System health monitoring
+
+## Database Schema
+
+### Core Models
+- **User**: Custom user model with role-based access
+- **RailwayZone**: Railway zones (SR, ER, WR, etc.)
+- **RailwayDivision**: Divisions within zones
+- **Requirement**: Equipment requirements with status tracking
+- **VendorRequest**: Vendor bids for requirements
+- **RequirementInspection**: Inspection records
+- **Notification**: System notifications
+
+### Key Relationships
+- Users belong to zones/divisions
+- Requirements are created by Railway Authority
+- Vendors can submit requests for requirements
+- Requirements have multiple inspection records
+- All actions generate notifications
 
 ## Deployment
 
-### Production Deployment
+### Production Setup
+1. **Web Server**: Use Gunicorn with Nginx
+2. **Database**: PostgreSQL with connection pooling
+3. **Cache**: Redis for sessions and caching
+4. **Background Tasks**: Celery with Redis broker
+5. **Static Files**: Serve via CDN or Nginx
+6. **SSL**: Use Let's Encrypt for HTTPS
 
-1. **Configure production settings**
-   ```bash
-   export DJANGO_SETTINGS_MODULE=qrail.settings_production
-   ```
+### Docker Deployment
+```bash
+# Build and run with Docker Compose
+docker-compose up -d
 
-2. **Set up SSL certificates**
-   ```bash
-   # Place SSL certificates in ssl/ directory
-   cp your-cert.pem ssl/cert.pem
-   cp your-key.pem ssl/key.pem
-   ```
+# Run migrations
+docker-compose exec web python manage.py migrate
 
-3. **Deploy with Docker**
-   ```bash
-   docker-compose -f docker-compose.prod.yml up -d
-   ```
+# Create superuser
+docker-compose exec web python manage.py createsuperuser
 
-4. **Run migrations**
-   ```bash
-   docker-compose exec web python manage.py migrate
-   ```
+# Create initial data
+docker-compose exec web python manage.py create_initial_data
+```
 
-### Environment-specific Configuration
+### Environment Variables for Production
+```env
+DEBUG=False
+ALLOWED_HOSTS=yourdomain.com,www.yourdomain.com
+SECRET_KEY=your-production-secret-key
 
-- **Development**: `qrail.settings`
-- **Production**: `qrail.settings_production`
+# Database
+DB_NAME=qrailway_prod
+DB_USER=qrailway_user
+DB_PASSWORD=secure-password
+DB_HOST=db-host
+DB_PORT=5432
 
-## Monitoring and Logging
+# Redis
+REDIS_URL=redis://redis-host:6379/0
 
-- **Application logs**: Comprehensive logging for debugging
-- **Error tracking**: Sentry integration for error monitoring
-- **Performance monitoring**: Database and application metrics
-- **Health checks**: Automated health monitoring
+# Email
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.your-provider.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=noreply@yourdomain.com
+EMAIL_HOST_PASSWORD=email-password
+DEFAULT_FROM_EMAIL=noreply@yourdomain.com
+```
+
+## Monitoring and Maintenance
+
+### Health Checks
+- `/health/` - Basic health check
+- `/health/ready/` - Readiness probe
+- `/health/live/` - Liveness probe
+
+### Logging
+- Application logs in `logs/django.log`
+- Celery task logs
+- Access logs via web server
+- Error tracking (integrate with Sentry)
+
+### Backup Strategy
+- Database backups (daily)
+- Media files backup
+- Configuration backup
+- Log rotation
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Add tests for new functionality
+4. Add tests
 5. Submit a pull request
 
 ## License
@@ -264,14 +304,27 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 For support and questions:
 - Create an issue in the repository
 - Contact the development team
-- Check the documentation wiki
+- Check the documentation
 
 ## Roadmap
 
-- [ ] Mobile application (React Native)
-- [ ] Advanced analytics dashboard
-- [ ] Integration with external systems
-- [ ] Machine learning for predictive maintenance
-- [ ] IoT device integration
-- [ ] Multi-language support
-- [ ] Advanced reporting features
+### Phase 1 (Current)
+- ✅ Basic requirement management
+- ✅ Vendor bidding system
+- ✅ QR code integration
+- ✅ Notification system
+- ✅ User dashboards
+
+### Phase 2 (Planned)
+- 📱 Mobile application
+- 📊 Advanced analytics
+- 🔄 Workflow automation
+- 📈 Performance monitoring
+- 🌐 Multi-language support
+
+### Phase 3 (Future)
+- 🤖 AI-powered insights
+- 🔗 Third-party integrations
+- ☁️ Cloud deployment
+- 🔒 Advanced security features
+- 📱 IoT device integration

@@ -19,7 +19,8 @@ from accounts.models import User
 from parts.models import Part, PartCategory
 from orders.models import PurchaseOrder, Project
 from tracking.models import TrackingEvent, Alert, InspectionRecord
-from core.models import QRCodeScan, Notification
+from core.models import QRCodeScan
+from notifications.models import Notification
 
 
 @login_required

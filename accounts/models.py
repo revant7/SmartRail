@@ -11,18 +11,16 @@ class User(AbstractUser):
     Custom User model with role-based access control.
     """
     USER_TYPE_CHOICES = [
-        ('ADMIN', 'System Administrator'),
         ('RAILWAY_AUTHORITY', 'Railway Authority'),
-        ('RAILWAY_EMPLOYEE', 'Railway Employee'),
         ('VENDOR', 'Vendor'),
-        ('INSPECTOR', 'Quality Inspector'),
-        ('MANAGER', 'Project Manager'),
+        ('RAILWAY_WORKER', 'Railway Worker'),
+        ('SOFTWARE_STAFF', 'Software Staff/Moderator'),
     ]
     
     user_type = models.CharField(
         max_length=20,
         choices=USER_TYPE_CHOICES,
-        default='RAILWAY_EMPLOYEE',
+        default='VENDOR',
         help_text="Type of user in the system"
     )
     
@@ -83,20 +81,14 @@ class User(AbstractUser):
     def is_railway_authority(self):
         return self.user_type == 'RAILWAY_AUTHORITY'
     
-    def is_railway_employee(self):
-        return self.user_type == 'RAILWAY_EMPLOYEE'
+    def is_railway_worker(self):
+        return self.user_type == 'RAILWAY_WORKER'
     
     def is_vendor(self):
         return self.user_type == 'VENDOR'
     
-    def is_admin(self):
-        return self.user_type == 'ADMIN' or self.is_superuser
-    
-    def is_inspector(self):
-        return self.user_type == 'INSPECTOR'
-    
-    def is_manager(self):
-        return self.user_type == 'MANAGER'
+    def is_software_staff(self):
+        return self.user_type == 'SOFTWARE_STAFF' or self.is_superuser
 
 
 class UserProfile(models.Model):

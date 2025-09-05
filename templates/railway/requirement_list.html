@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+
+{% block title %}Requirements - QRailway{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        {% if user.is_railway_authority %}
+            My Requirements
+        {% elif user.is_vendor %}
+            Available Requirements
+        {% elif user.is_railway_worker %}
+            Requirements
+        {% else %}
+            All Requirements
+        {% endif %}
+    </h1>
+    {% if user.is_railway_authority %}
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'railway:create_requirement' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Create Requirement
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Filters -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="search" class="form-label">Search</label>
+                        <input type="text" class="form-control" id="search" name="search" 
+                               value="{{ search_query }}" placeholder="Search requirements...">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="">All Status</option>
+                            {% for status_code, status_name in status_choices %}
+                            <option value="{{ status_code }}" {% if status_filter == status_code %}selected{% endif %}>{{ status_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="priority" class="form-label">Priority</label>
+                        <select class="form-select" id="priority" name="priority">
+                            <option value="">All Priority</option>
+                            {% for priority_code, priority_name in priority_choices %}
+                            <option value="{{ priority_code }}" {% if priority_filter == priority_code %}selected{% endif %}>{{ priority_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="zone" class="form-label">Zone</label>
+                        <select class="form-select" id="zone" name="zone">
+                            <option value="">All Zones</option>
+                            {% for zone in zones %}
+                            <option value="{{ zone.id }}" {% if zone_filter == zone.id|stringformat:"s" %}selected{% endif %}>{{ zone.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">&nbsp;</label>
+                        <div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-funnel"></i> Filter
+                            </button>
+                            <a href="{% url 'railway:requirement_list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Clear
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Requirements List -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                {% if requirements %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Zone</th>
+                                <th>Location</th>
+                                <th>Status</th>
+                                <th>Priority</th>
+                                <th>Deadline</th>
+                                {% if user.is_railway_authority %}
+                                <th>Vendor</th>
+                                {% endif %}
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for requirement in requirements %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'railway:requirement_detail' requirement.id %}" class="text-decoration-none">
+                                        {{ requirement.title }}
+                                    </a>
+                                    <br><small class="text-muted">{{ requirement.category }}</small>
+                                </td>
+                                <td>
+                                    <strong>{{ requirement.zone.name }}</strong>
+                                    <br><small class="text-muted">{{ requirement.division.name }}</small>
+                                </td>
+                                <td>
+                                    {{ requirement.location }}
+                                    {% if requirement.track_section %}
+                                        <br><small class="text-muted">{{ requirement.track_section }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-{% if requirement.status == 'COMPLETED' %}success{% elif requirement.status == 'ACTIVE' %}primary{% elif requirement.status == 'INACTIVE' %}secondary{% elif requirement.status == 'SHIPPED' %}warning{% elif requirement.status == 'RECEIVED' %}info{% else %}dark{% endif %}">
+                                        {{ requirement.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{% if requirement.priority == 'URGENT' %}danger{% elif requirement.priority == 'HIGH' %}warning{% elif requirement.priority == 'MEDIUM' %}info{% else %}secondary{% endif %}">
+                                        {{ requirement.get_priority_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if requirement.deadline_date %}
+                                        {{ requirement.deadline_date|date:"M d, Y" }}
+                                        {% if requirement.is_overdue %}
+                                            <br><small class="text-danger">Overdue</small>
+                                        {% elif requirement.get_days_remaining %}
+                                            <br><small class="text-muted">{{ requirement.get_days_remaining }} days left</small>
+                                        {% endif %}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                                {% if user.is_railway_authority %}
+                                <td>
+                                    {% if requirement.assigned_vendor %}
+                                        {{ requirement.assigned_vendor.get_full_name }}
+                                    {% else %}
+                                        <span class="text-muted">Not assigned</span>
+                                    {% endif %}
+                                </td>
+                                {% endif %}
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'railway:requirement_detail' requirement.id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i> View
+                                        </a>
+                                        {% if user.is_railway_authority and requirement.created_by == user %}
+                                        <a href="{% url 'railway:edit_requirement' requirement.id %}" class="btn btn-sm btn-outline-secondary">
+                                            <i class="bi bi-pencil"></i> Edit
+                                        </a>
+                                        {% endif %}
+                                        {% if user.is_vendor and requirement.status == 'INACTIVE' and not requirement.assigned_vendor %}
+                                        <a href="{% url 'railway:create_vendor_request' requirement.id %}" class="btn btn-sm btn-success">
+                                            <i class="bi bi-hand-thumbs-up"></i> Request
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if requirements.has_other_pages %}
+                <nav aria-label="Requirements pagination" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if requirements.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if priority_filter %}&priority={{ priority_filter }}{% endif %}{% if zone_filter %}&zone={{ zone_filter }}{% endif %}">First</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ requirements.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if priority_filter %}&priority={{ priority_filter }}{% endif %}{% if zone_filter %}&zone={{ zone_filter }}{% endif %}">Previous</a>
+                        </li>
+                        {% endif %}
+                        
+                        <li class="page-item active">
+                            <span class="page-link">
+                                Page {{ requirements.number }} of {{ requirements.paginator.num_pages }}
+                            </span>
+                        </li>
+                        
+                        {% if requirements.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ requirements.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if priority_filter %}&priority={{ priority_filter }}{% endif %}{% if zone_filter %}&zone={{ zone_filter }}{% endif %}">Next</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ requirements.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if priority_filter %}&priority={{ priority_filter }}{% endif %}{% if zone_filter %}&zone={{ zone_filter }}{% endif %}">Last</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-list-task text-muted" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3 text-muted">No requirements found</h5>
+                    <p class="text-muted">
+                        {% if search_query or status_filter or priority_filter or zone_filter %}
+                            Try adjusting your filters to see more requirements.
+                        {% else %}
+                            {% if user.is_railway_authority %}
+                                Create your first requirement to get started.
+                            {% else %}
+                                No requirements are available at the moment.
+                            {% endif %}
+                        {% endif %}
+                    </p>
+                    {% if user.is_railway_authority %}
+                    <a href="{% url 'railway:create_requirement' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Create Requirement
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

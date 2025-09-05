@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}QR Code Tracking - QRAIL{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Header -->
+        <div class="text-center mb-4">
+            <h2 class="mb-1">
+                <i class="bi bi-qr-code-scan"></i> QR Code Tracking
+            </h2>
+            <p class="text-muted">Scan QR code or enter UUID to track requirement details</p>
+        </div>
+
+        <!-- QR Code Scanner Section -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-camera"></i> Scan QR Code
+                </h6>
+            </div>
+            <div class="card-body text-center">
+                <div id="scanner-container" class="mb-3">
+                    <video id="video" width="100%" height="300" style="display: none;"></video>
+                    <canvas id="canvas" width="300" height="300" style="display: none;"></canvas>
+                    <div id="scanner-placeholder" class="border rounded p-5">
+                        <i class="bi bi-camera fs-1 text-muted"></i>
+                        <p class="mt-2 text-muted">Camera will appear here when you start scanning</p>
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                    <button id="startScanBtn" class="btn btn-primary">
+                        <i class="bi bi-play-circle"></i> Start Scanning
+                    </button>
+                    <button id="stopScanBtn" class="btn btn-secondary" style="display: none;">
+                        <i class="bi bi-stop-circle"></i> Stop Scanning
+                    </button>
+                </div>
+                
+                <div id="scanResult" class="mt-3" style="display: none;">
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle"></i> QR Code detected! Redirecting...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manual UUID Entry Section -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-keyboard"></i> Manual Entry
+                </h6>
+            </div>
+            <div class="card-body">
+                <form id="uuidForm" method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="requirement_uuid" class="form-label">Requirement UUID</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="requirement_uuid" 
+                               name="requirement_uuid" 
+                               placeholder="Enter or paste UUID here"
+                               required>
+                        <div class="form-text">Enter the UUID from the QR code or requirement details</div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-search"></i> Track Requirement
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Recent Scans Section -->
+        {% if recent_scans %}
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-clock-history"></i> Recent Scans
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for scan in recent_scans %}
+                    <a href="{% url 'railway:qr_track' uuid=scan.qr_code_data %}" 
+                       class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ scan.scan_result.requirement_title|default:"Unknown Requirement" }}</h6>
+                            <small>{{ scan.scan_timestamp|timesince }} ago</small>
+                        </div>
+                        <p class="mb-1 text-muted">UUID: {{ scan.qr_code_data }}</p>
+                        <small>Scanned by: {{ scan.scanned_by.get_full_name|default:"Anonymous" }}</small>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startScanBtn');
+    const stopBtn = document.getElementById('stopScanBtn');
+    const placeholder = document.getElementById('scanner-placeholder');
+    const scanResult = document.getElementById('scanResult');
+    const uuidForm = document.getElementById('uuidForm');
+    
+    let stream = null;
+    let scanning = false;
+    
+    // Start scanning
+    startBtn.addEventListener('click', async function() {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: 'environment' } 
+            });
+            
+            video.srcObject = stream;
+            video.style.display = 'block';
+            placeholder.style.display = 'none';
+            startBtn.style.display = 'none';
+            stopBtn.style.display = 'inline-block';
+            scanning = true;
+            
+            video.play();
+            scanFrame();
+        } catch (err) {
+            console.error('Error accessing camera:', err);
+            alert('Unable to access camera. Please use manual entry instead.');
+        }
+    });
+    
+    // Stop scanning
+    stopBtn.addEventListener('click', function() {
+        scanning = false;
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+        }
+        video.style.display = 'none';
+        placeholder.style.display = 'block';
+        startBtn.style.display = 'inline-block';
+        stopBtn.style.display = 'none';
+    });
+    
+    // Scan for QR codes
+    function scanFrame() {
+        if (!scanning) return;
+        
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            canvas.height = video.videoHeight;
+            canvas.width = video.videoWidth;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+            
+            if (code) {
+                console.log('QR Code detected:', code.data);
+                handleQRCode(code.data);
+            }
+        }
+        
+        requestAnimationFrame(scanFrame);
+    }
+    
+    // Handle detected QR code
+    function handleQRCode(data) {
+        scanning = false;
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+        }
+        
+        scanResult.style.display = 'block';
+        video.style.display = 'none';
+        placeholder.style.display = 'block';
+        startBtn.style.display = 'inline-block';
+        stopBtn.style.display = 'none';
+        
+        // Redirect to tracking page
+        setTimeout(() => {
+            window.location.href = `/railway/qr-track/${data}/`;
+        }, 1500);
+    }
+    
+    // Handle manual form submission
+    uuidForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const uuid = document.getElementById('requirement_uuid').value.trim();
+        if (uuid) {
+            window.location.href = `/railway/qr-track/${uuid}/`;
+        }
+    });
+    
+    // Auto-focus on UUID input
+    document.getElementById('requirement_uuid').focus();
+});
+</script>
+{% endblock %}

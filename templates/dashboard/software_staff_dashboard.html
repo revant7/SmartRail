@@ -1,0 +1,329 @@
+{% extends 'base.html' %}
+
+{% block title %}Software Staff Dashboard - QRailway{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Software Staff Dashboard</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="/admin/" class="btn btn-primary">
+            <i class="bi bi-gear"></i> Admin Panel
+        </a>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Total Users</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ stats.total_users }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-people fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Requirements</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ stats.total_requirements }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-list-task fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Vendor Requests</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ stats.total_vendor_requests }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-hand-thumbs-up fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Active</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ stats.active_requirements }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-play-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Overdue</div>
+                        <div class="h5 mb-0 font-weight-bold text-warning">{{ stats.overdue_requirements }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-exclamation-triangle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Pending</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ stats.pending_vendor_requests }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-clock fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- System Alerts -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">System Alerts</h5>
+            </div>
+            <div class="card-body">
+                {% if system_alerts %}
+                <div class="list-group list-group-flush">
+                    {% for alert in system_alerts %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ alert.title }}</h6>
+                            <span class="badge bg-{% if alert.notification_type == 'ERROR' %}danger{% elif alert.notification_type == 'WARNING' %}warning{% else %}info{% endif %}">
+                                {{ alert.get_notification_type_display }}
+                            </span>
+                        </div>
+                        <p class="mb-1">{{ alert.message|truncatechars:50 }}</p>
+                        <small class="text-muted">{{ alert.created_at|timesince }} ago</small>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">No system alerts.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Zone Statistics -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Zone-wise Statistics</h5>
+            </div>
+            <div class="card-body">
+                {% if zone_stats %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Zone</th>
+                                <th>Divisions</th>
+                                <th>Requirements</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for zone in zone_stats %}
+                            <tr>
+                                <td>
+                                    <strong>{{ zone.name }}</strong>
+                                    <br><small class="text-muted">{{ zone.zone_code }}</small>
+                                </td>
+                                <td>{{ zone.division_count }}</td>
+                                <td>{{ zone.requirement_count }}</td>
+                                <td>
+                                    <span class="badge bg-{% if zone.is_active %}success{% else %}secondary{% endif %}">
+                                        {% if zone.is_active %}Active{% else %}Inactive{% endif %}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No zone data available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Requirements -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Recent Requirements</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_requirements %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Zone</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for requirement in recent_requirements %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'railway:requirement_detail' requirement.id %}" class="text-decoration-none">
+                                        {{ requirement.title }}
+                                    </a>
+                                </td>
+                                <td>{{ requirement.zone.name }}</td>
+                                <td>
+                                    <span class="badge bg-{% if requirement.status == 'COMPLETED' %}success{% elif requirement.status == 'ACTIVE' %}primary{% elif requirement.status == 'INACTIVE' %}secondary{% else %}warning{% endif %}">
+                                        {{ requirement.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>{{ requirement.created_at|date:"M d, Y" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No requirements found.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Vendor Requests -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Recent Vendor Requests</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_vendor_requests %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Requirement</th>
+                                <th>Vendor</th>
+                                <th>Status</th>
+                                <th>Submitted</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for request in recent_vendor_requests %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'railway:requirement_detail' request.requirement.id %}" class="text-decoration-none">
+                                        {{ request.requirement.title }}
+                                    </a>
+                                </td>
+                                <td>{{ request.vendor.get_full_name }}</td>
+                                <td>
+                                    <span class="badge bg-{% if request.status == 'APPROVED' %}success{% elif request.status == 'PENDING' %}warning{% elif request.status == 'REJECTED' %}danger{% else %}secondary{% endif %}">
+                                        {{ request.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>{{ request.created_at|date:"M d, Y" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No vendor requests found.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Users -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Recent Users</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_users %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Username</th>
+                                <th>User Type</th>
+                                <th>Email</th>
+                                <th>Joined</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in recent_users %}
+                            <tr>
+                                <td>{{ user.get_full_name }}</td>
+                                <td>{{ user.username }}</td>
+                                <td>
+                                    <span class="badge bg-info">{{ user.get_user_type_display }}</span>
+                                </td>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.date_joined|date:"M d, Y" }}</td>
+                                <td>
+                                    <span class="badge bg-{% if user.is_active %}success{% else %}danger{% endif %}">
+                                        {% if user.is_active %}Active{% else %}Inactive{% endif %}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No users found.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

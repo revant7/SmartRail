@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Submit Vendor Request - QRAIL{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="mb-1">Submit Vendor Request</h2>
+                <p class="text-muted mb-0">Requirement: {{ requirement.title }}</p>
+            </div>
+            <a href="{% url 'railway:requirement_detail' requirement_id=requirement.id %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Requirement
+            </a>
+        </div>
+
+        <!-- Requirement Details -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Requirement Details</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Category:</strong> {{ requirement.get_category_display }}</p>
+                        <p><strong>Priority:</strong> 
+                            <span class="badge bg-{% if requirement.priority == 'URGENT' %}danger{% elif requirement.priority == 'HIGH' %}warning{% elif requirement.priority == 'MEDIUM' %}info{% else %}secondary{% endif %}">
+                                {{ requirement.get_priority_display }}
+                            </span>
+                        </p>
+                        <p><strong>Quantity:</strong> {{ requirement.quantity }} {{ requirement.unit }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Deadline:</strong> {{ requirement.deadline_date|date:"M d, Y" }}</p>
+                        <p><strong>Zone:</strong> {{ requirement.zone.name }}</p>
+                        <p><strong>Division:</strong> {{ requirement.division.name }}</p>
+                    </div>
+                </div>
+                {% if requirement.description %}
+                <div class="mt-3">
+                    <h6>Description</h6>
+                    <p>{{ requirement.description }}</p>
+                </div>
+                {% endif %}
+                {% if requirement.specifications %}
+                <div class="mt-3">
+                    <h6>Technical Specifications</h6>
+                    <pre class="bg-light p-3 rounded">{{ requirement.specifications|pprint }}</pre>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Vendor Request Form -->
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Submit Your Proposal</h6>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.proposed_price.id_for_label }}" class="form-label">
+                                    Proposed Price <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">{{ requirement.currency|default:"₹" }}</span>
+                                    {{ form.proposed_price }}
+                                </div>
+                                {% if form.proposed_price.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.proposed_price.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.delivery_time_days.id_for_label }}" class="form-label">
+                                    Delivery Time (Days) <span class="text-danger">*</span>
+                                </label>
+                                {{ form.delivery_time_days }}
+                                {% if form.delivery_time_days.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.delivery_time_days.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.proposal_description.id_for_label }}" class="form-label">
+                            Proposal Description <span class="text-danger">*</span>
+                        </label>
+                        {{ form.proposal_description }}
+                        {% if form.proposal_description.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.proposal_description.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">Describe your approach, methodology, and any additional value you can provide.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.technical_specifications.id_for_label }}" class="form-label">
+                            Technical Specifications
+                        </label>
+                        {{ form.technical_specifications }}
+                        {% if form.technical_specifications.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.technical_specifications.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">Provide detailed technical specifications for your proposed solution (optional).</div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'railway:requirement_detail' requirement_id=requirement.id %}" class="btn btn-secondary me-md-2">
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-send"></i> Submit Request
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-resize textarea
+document.addEventListener('DOMContentLoaded', function() {
+    const textareas = document.querySelectorAll('textarea');
+    textareas.forEach(textarea => {
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+    });
+});
+</script>
+{% endblock %}

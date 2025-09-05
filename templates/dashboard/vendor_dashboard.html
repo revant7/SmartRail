@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+
+{% block title %}Vendor Dashboard - QRailway{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Vendor Dashboard</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'railway:requirement_list' %}" class="btn btn-primary">
+            <i class="bi bi-search"></i> Browse Requirements
+        </a>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Total Requests</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ stats.total_requests }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-hand-thumbs-up fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Approved</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ stats.approved_requests }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-check-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Pending</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ stats.pending_requests }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-clock fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Assigned</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ stats.assigned_requirements }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-list-task fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Active Requirements -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Active Requirements</h5>
+            </div>
+            <div class="card-body">
+                {% if active_requirements %}
+                <div class="list-group list-group-flush">
+                    {% for requirement in active_requirements %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ requirement.title }}</h6>
+                            <span class="badge bg-{% if requirement.status == 'ACTIVE' %}primary{% elif requirement.status == 'SHIPPED' %}warning{% else %}info{% endif %}">
+                                {{ requirement.get_status_display }}
+                            </span>
+                        </div>
+                        <p class="mb-1">{{ requirement.location }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                Deadline: {{ requirement.deadline_date|date:"M d, Y" }}
+                                {% if requirement.get_days_remaining %}
+                                    ({{ requirement.get_days_remaining }} days left)
+                                {% endif %}
+                            </small>
+                            <a href="{% url 'railway:requirement_detail' requirement.id %}" class="btn btn-sm btn-outline-primary">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">No active requirements assigned to you.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Available Requirements -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Available Requirements</h5>
+            </div>
+            <div class="card-body">
+                {% if available_requirements %}
+                <div class="list-group list-group-flush">
+                    {% for requirement in available_requirements %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ requirement.title }}</h6>
+                            <span class="badge bg-{% if requirement.priority == 'URGENT' %}danger{% elif requirement.priority == 'HIGH' %}warning{% elif requirement.priority == 'MEDIUM' %}info{% else %}secondary{% endif %}">
+                                {{ requirement.get_priority_display }}
+                            </span>
+                        </div>
+                        <p class="mb-1">{{ requirement.location }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                Deadline: {{ requirement.deadline_date|date:"M d, Y" }}
+                                {% if requirement.get_days_remaining %}
+                                    ({{ requirement.get_days_remaining }} days left)
+                                {% endif %}
+                            </small>
+                            <a href="{% url 'railway:create_vendor_request' requirement.id %}" class="btn btn-sm btn-success">
+                                Request
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">No available requirements at the moment.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Requests -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Recent Requests</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_requests %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Requirement</th>
+                                <th>Proposed Price</th>
+                                <th>Delivery Time</th>
+                                <th>Status</th>
+                                <th>Submitted</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for request in recent_requests %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'railway:requirement_detail' request.requirement.id %}" class="text-decoration-none">
+                                        {{ request.requirement.title }}
+                                    </a>
+                                </td>
+                                <td>₹{{ request.proposed_price|floatformat:2 }}</td>
+                                <td>{{ request.delivery_time_days }} days</td>
+                                <td>
+                                    <span class="badge bg-{% if request.status == 'APPROVED' %}success{% elif request.status == 'PENDING' %}warning{% elif request.status == 'REJECTED' %}danger{% else %}secondary{% endif %}">
+                                        {{ request.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>{{ request.created_at|date:"M d, Y" }}</td>
+                                <td>
+                                    <a href="{% url 'railway:requirement_detail' request.requirement.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i> View
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No requests submitted yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,332 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Requirement - QRAIL{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h5 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-plus-circle"></i> Create New Requirement
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" id="requirementForm">
+                    {% csrf_token %}
+                    
+                    <!-- Basic Information -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary border-bottom pb-2">Basic Information</h6>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="{{ form.title.id_for_label }}" class="form-label">Title *</label>
+                                {{ form.title }}
+                                {% if form.title.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.title.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="{{ form.category.id_for_label }}" class="form-label">Category *</label>
+                                {{ form.category }}
+                                {% if form.category.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.category.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">Description *</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.description.errors %}{{ error }}{% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Location Information -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary border-bottom pb-2">Location Information</h6>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="{{ form.zone.id_for_label }}" class="form-label">Zone *</label>
+                                {{ form.zone }}
+                                {% if form.zone.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.zone.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="{{ form.division.id_for_label }}" class="form-label">Division *</label>
+                                {{ form.division }}
+                                {% if form.division.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.division.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="{{ form.location.id_for_label }}" class="form-label">Location *</label>
+                                {{ form.location }}
+                                {% if form.location.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.location.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.track_section.id_for_label }}" class="form-label">Track Section</label>
+                                {{ form.track_section }}
+                                {% if form.track_section.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.track_section.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.kilometer_marker.id_for_label }}" class="form-label">Kilometer Marker</label>
+                                {{ form.kilometer_marker }}
+                                {% if form.kilometer_marker.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.kilometer_marker.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Technical Specifications -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary border-bottom pb-2">Technical Specifications</h6>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.specifications.id_for_label }}" class="form-label">Specifications (JSON)</label>
+                        {{ form.specifications }}
+                        <div class="form-text">Enter technical specifications in JSON format. Example: {"material": "steel", "grade": "A36"}</div>
+                        {% if form.specifications.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.specifications.errors %}{{ error }}{% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Quantity and Timeline -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary border-bottom pb-2">Quantity and Timeline</h6>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="{{ form.quantity.id_for_label }}" class="form-label">Quantity *</label>
+                                {{ form.quantity }}
+                                {% if form.quantity.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.quantity.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="{{ form.unit.id_for_label }}" class="form-label">Unit *</label>
+                                {{ form.unit }}
+                                {% if form.unit.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.unit.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="{{ form.deadline_days.id_for_label }}" class="form-label">Deadline (Days) *</label>
+                                {{ form.deadline_days }}
+                                {% if form.deadline_days.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.deadline_days.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="{{ form.priority.id_for_label }}" class="form-label">Priority *</label>
+                                {{ form.priority }}
+                                {% if form.priority.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.priority.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Budget Information -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary border-bottom pb-2">Budget Information</h6>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.budget.id_for_label }}" class="form-label">Budget Amount</label>
+                                {{ form.budget }}
+                                {% if form.budget.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.budget.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.currency.id_for_label }}" class="form-label">Currency</label>
+                                {{ form.currency }}
+                                {% if form.currency.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.currency.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'railway:requirement_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to Requirements
+                        </a>
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            <i class="bi bi-check"></i> <span id="submitText">Create Requirement</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const zoneSelect = document.getElementById('id_zone');
+    const divisionSelect = document.getElementById('id_division');
+    const locationSelect = document.getElementById('id_location');
+    
+    function loadDivisions() {
+        const zoneId = zoneSelect.value;
+        if (zoneId) {
+            fetch(`/railway/api/divisions/?zone=${zoneId}`)
+                .then(response => response.json())
+                .then(data => {
+                    divisionSelect.innerHTML = '<option value="">Select Division</option>';
+                    data.divisions.forEach(division => {
+                        const option = document.createElement('option');
+                        option.value = division.id;
+                        option.textContent = division.name;
+                        divisionSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error loading divisions:', error));
+        } else {
+            divisionSelect.innerHTML = '<option value="">Select Division</option>';
+        }
+        // Clear location when zone changes
+        locationSelect.innerHTML = '<option value="">Select Location</option>';
+    }
+    
+    function loadLocations() {
+        const divisionId = divisionSelect.value;
+        if (divisionId) {
+            fetch(`/railway/api/locations/?division=${divisionId}`)
+                .then(response => response.json())
+                .then(data => {
+                    locationSelect.innerHTML = '<option value="">Select Location</option>';
+                    data.locations.forEach(location => {
+                        const option = document.createElement('option');
+                        option.value = location.id;
+                        option.textContent = location.name;
+                        locationSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error loading locations:', error));
+        } else {
+            locationSelect.innerHTML = '<option value="">Select Location</option>';
+        }
+    }
+    
+    zoneSelect.addEventListener('change', loadDivisions);
+    divisionSelect.addEventListener('change', loadLocations);
+    
+    // Load divisions on page load if zone is already selected
+    if (zoneSelect.value) {
+        loadDivisions();
+    }
+    // Load locations on page load if division is already selected
+    if (divisionSelect.value) {
+        loadLocations();
+    }
+    
+    // Prevent double form submission
+    const form = document.getElementById('requirementForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const submitText = document.getElementById('submitText');
+    
+    form.addEventListener('submit', function(e) {
+        if (submitBtn.disabled) {
+            e.preventDefault();
+            return false;
+        }
+        
+        // Disable submit button and show loading state
+        submitBtn.disabled = true;
+        submitText.textContent = 'Creating...';
+        submitBtn.classList.add('disabled');
+        
+        // Re-enable after 5 seconds as fallback
+        setTimeout(function() {
+            submitBtn.disabled = false;
+            submitText.textContent = 'Create Requirement';
+            submitBtn.classList.remove('disabled');
+        }, 5000);
+    });
+});
+</script>
+{% endblock %}

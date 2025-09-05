@@ -82,53 +82,6 @@ class QRCodeScan(models.Model):
         return f"Scan: {self.qr_code_data[:20]}... by {self.scanned_by or 'Anonymous'}"
 
 
-class Notification(models.Model):
-    """
-    System notifications for users.
-    """
-    NOTIFICATION_TYPES = [
-        ('INFO', 'Information'),
-        ('WARNING', 'Warning'),
-        ('ERROR', 'Error'),
-        ('SUCCESS', 'Success'),
-        ('ALERT', 'Alert'),
-    ]
-    
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='notifications'
-    )
-    notification_type = models.CharField(
-        max_length=10,
-        choices=NOTIFICATION_TYPES,
-        default='INFO'
-    )
-    title = models.CharField(max_length=200)
-    message = models.TextField()
-    is_read = models.BooleanField(default=False)
-    action_url = models.URLField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    read_at = models.DateTimeField(null=True, blank=True)
-    
-    class Meta:
-        db_table = 'notifications'
-        verbose_name = 'Notification'
-        verbose_name_plural = 'Notifications'
-        ordering = ['-created_at']
-    
-    def __str__(self):
-        return f"{self.user.username} - {self.title}"
-    
-    def mark_as_read(self):
-        """
-        Mark notification as read.
-        """
-        self.is_read = True
-        self.read_at = timezone.now()
-        self.save()
-
-
 class DashboardWidget(models.Model):
     """
     Dashboard widgets configuration for users.

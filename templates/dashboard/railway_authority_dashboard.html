@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+
+{% block title %}Railway Authority Dashboard - QRailway{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Railway Authority Dashboard</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'railway:create_requirement' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Create Requirement
+        </a>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Total Requirements</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ stats.total_requirements }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-list-task fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Active Requirements</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ stats.active_requirements }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-play-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Completed</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ stats.completed_requirements }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-check-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Overdue</div>
+                        <div class="h5 mb-0 font-weight-bold text-warning">{{ stats.overdue_requirements }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-exclamation-triangle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Requirements -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Recent Requirements</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_requirements %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Status</th>
+                                <th>Priority</th>
+                                <th>Deadline</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for requirement in recent_requirements %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'railway:requirement_detail' requirement.id %}" class="text-decoration-none">
+                                        {{ requirement.title }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{% if requirement.status == 'COMPLETED' %}success{% elif requirement.status == 'ACTIVE' %}primary{% elif requirement.status == 'INACTIVE' %}secondary{% else %}warning{% endif %}">
+                                        {{ requirement.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{% if requirement.priority == 'URGENT' %}danger{% elif requirement.priority == 'HIGH' %}warning{% elif requirement.priority == 'MEDIUM' %}info{% else %}secondary{% endif %}">
+                                        {{ requirement.get_priority_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if requirement.deadline_date %}
+                                        {{ requirement.deadline_date|date:"M d, Y" }}
+                                        {% if requirement.is_overdue %}
+                                            <span class="text-danger">(Overdue)</span>
+                                        {% endif %}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'railway:requirement_detail' requirement.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i> View
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No requirements found.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Overdue Requirements & Notifications -->
+    <div class="col-lg-4">
+        <!-- Overdue Requirements -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Overdue Requirements</h5>
+            </div>
+            <div class="card-body">
+                {% if overdue_requirements %}
+                <div class="list-group list-group-flush">
+                    {% for requirement in overdue_requirements %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ requirement.title }}</h6>
+                            <small class="text-danger">{{ requirement.get_days_remaining }} days overdue</small>
+                        </div>
+                        <p class="mb-1">{{ requirement.location }}</p>
+                        <a href="{% url 'railway:requirement_detail' requirement.id %}" class="btn btn-sm btn-outline-danger">
+                            View Details
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">No overdue requirements.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Recent Notifications -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Recent Notifications</h5>
+            </div>
+            <div class="card-body">
+                {% if notifications %}
+                <div class="list-group list-group-flush">
+                    {% for notification in notifications %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ notification.title }}</h6>
+                            <small>{{ notification.created_at|timesince }} ago</small>
+                        </div>
+                        <p class="mb-1">{{ notification.message|truncatechars:50 }}</p>
+                        {% if notification.action_url %}
+                        <a href="{{ notification.action_url }}" class="btn btn-sm btn-outline-primary">
+                            View
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">No new notifications.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
