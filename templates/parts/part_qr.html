@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}QR Code - {{ part.name }}{% endblock %}
+
+{% block page_header %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">QR Code for {{ part.name }}</h1>
+        <p class="text-muted">Part Number: {{ part.part_number }}</p>
+    </div>
+    <div>
+        <a href="{% url 'parts:part_detail' part.id %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Part
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">QR Code Generator</h6>
+            </div>
+            <div class="card-body text-center">
+                <!-- QR Code Display -->
+                <div class="mb-4">
+                    <div id="qrcode" class="d-flex justify-content-center"></div>
+                </div>
+                
+                <!-- Part Information -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">Part Information</h6>
+                                <p class="mb-1"><strong>Name:</strong> {{ part.name }}</p>
+                                <p class="mb-1"><strong>Number:</strong> {{ part.part_number }}</p>
+                                <p class="mb-0"><strong>Category:</strong> {{ part.category.name }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">QR Code Details</h6>
+                                <p class="mb-1"><strong>URL:</strong> <small id="qr-url"></small></p>
+                                <p class="mb-1"><strong>Size:</strong> <span id="qr-size">200x200</span></p>
+                                <p class="mb-0"><strong>Format:</strong> PNG</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- QR Code Options -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <label for="qr-size-select" class="form-label">QR Code Size</label>
+                        <select class="form-select" id="qr-size-select">
+                            <option value="150">150x150 (Small)</option>
+                            <option value="200" selected>200x200 (Medium)</option>
+                            <option value="300">300x300 (Large)</option>
+                            <option value="400">400x400 (Extra Large)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="qr-format" class="form-label">Download Format</label>
+                        <select class="form-select" id="qr-format">
+                            <option value="png">PNG</option>
+                            <option value="svg">SVG</option>
+                            <option value="pdf">PDF</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="qr-quality" class="form-label">Quality</label>
+                        <select class="form-select" id="qr-quality">
+                            <option value="L">Low</option>
+                            <option value="M" selected>Medium</option>
+                            <option value="Q">High</option>
+                            <option value="H">Highest</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="d-flex justify-content-center gap-3">
+                    <button type="button" class="btn btn-primary" id="download-qr">
+                        <i class="bi bi-download"></i> Download QR Code
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" id="print-qr">
+                        <i class="bi bi-printer"></i> Print QR Code
+                    </button>
+                    <button type="button" class="btn btn-outline-info" id="copy-url">
+                        <i class="bi bi-clipboard"></i> Copy URL
+                    </button>
+                </div>
+                
+                <!-- Instructions -->
+                <div class="mt-4">
+                    <div class="alert alert-info">
+                        <h6><i class="bi bi-info-circle"></i> Instructions</h6>
+                        <ul class="mb-0 text-start">
+                            <li>Download the QR code and print it on a label</li>
+                            <li>Attach the label to the physical part</li>
+                            <li>Use the QR scanner to view part details</li>
+                            <li>The QR code contains a direct link to this part's information</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const qrContainer = document.getElementById('qrcode');
+    const partUrl = window.location.origin + '{% url "parts:part_detail" part.id %}';
+    const urlElement = document.getElementById('qr-url');
+    const sizeElement = document.getElementById('qr-size');
+    
+    let currentSize = 200;
+    let currentQuality = 'M';
+    
+    // Display URL
+    urlElement.textContent = partUrl;
+    
+    // Generate initial QR code
+    generateQRCode();
+    
+    // Size change handler
+    document.getElementById('qr-size-select').addEventListener('change', function() {
+        currentSize = parseInt(this.value);
+        sizeElement.textContent = currentSize + 'x' + currentSize;
+        generateQRCode();
+    });
+    
+    // Quality change handler
+    document.getElementById('qr-quality').addEventListener('change', function() {
+        currentQuality = this.value;
+        generateQRCode();
+    });
+    
+    // Generate QR code
+    function generateQRCode() {
+        qrContainer.innerHTML = '';
+        QRCode.toCanvas(qrContainer, partUrl, {
+            width: currentSize,
+            height: currentSize,
+            color: {
+                dark: '#000000',
+                light: '#FFFFFF'
+            },
+            errorCorrectionLevel: currentQuality
+        }, function (error) {
+            if (error) {
+                console.error(error);
+                qrContainer.innerHTML = '<div class="alert alert-danger">Error generating QR code</div>';
+            }
+        });
+    }
+    
+    // Download QR code
+    document.getElementById('download-qr').addEventListener('click', function() {
+        const format = document.getElementById('qr-format').value;
+        const filename = `{{ part.part_number }}_qr_code.${format}`;
+        
+        if (format === 'png') {
+            const canvas = qrContainer.querySelector('canvas');
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL();
+            link.click();
+        } else if (format === 'svg') {
+            QRCode.toString(partUrl, {
+                width: currentSize,
+                type: 'svg',
+                color: {
+                    dark: '#000000',
+                    light: '#FFFFFF'
+                },
+                errorCorrectionLevel: currentQuality
+            }, function (err, string) {
+                if (err) throw err;
+                const blob = new Blob([string], { type: 'image/svg+xml' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.download = filename;
+                link.href = url;
+                link.click();
+                URL.revokeObjectURL(url);
+            });
+        }
+    });
+    
+    // Print QR code
+    document.getElementById('print-qr').addEventListener('click', function() {
+        const canvas = qrContainer.querySelector('canvas');
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>QR Code - {{ part.name }}</title>
+                    <style>
+                        body { text-align: center; font-family: Arial, sans-serif; }
+                        .part-info { margin: 20px 0; }
+                        .qr-code { margin: 20px 0; }
+                    </style>
+                </head>
+                <body>
+                    <h2>{{ part.name }}</h2>
+                    <div class="part-info">
+                        <p><strong>Part Number:</strong> {{ part.part_number }}</p>
+                        <p><strong>Category:</strong> {{ part.category.name }}</p>
+                    </div>
+                    <div class="qr-code">
+                        ${canvas.outerHTML}
+                    </div>
+                    <p><small>Scan this QR code to view part details</small></p>
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+    });
+    
+    // Copy URL
+    document.getElementById('copy-url').addEventListener('click', function() {
+        navigator.clipboard.writeText(partUrl).then(function() {
+            const btn = document.getElementById('copy-url');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="bi bi-check"></i> Copied!';
+            btn.classList.remove('btn-outline-info');
+            btn.classList.add('btn-success');
+            
+            setTimeout(function() {
+                btn.innerHTML = originalText;
+                btn.classList.remove('btn-success');
+                btn.classList.add('btn-outline-info');
+            }, 2000);
+        });
+    });
+});
+</script>
+{% endblock %}

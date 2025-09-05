@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Search - QRAIL{% endblock %}
+
+{% block page_header %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">Search</h1>
+        <p class="text-muted">Find parts, orders, and other information</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Search Form -->
+<div class="card shadow mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-8">
+                <input type="text" class="form-control form-control-lg" name="q" placeholder="Search for parts, orders, projects..." value="{{ request.GET.q }}">
+            </div>
+            <div class="col-md-2">
+                <select class="form-select form-select-lg" name="type">
+                    <option value="">All Types</option>
+                    <option value="parts" {% if request.GET.type == "parts" %}selected{% endif %}>Parts</option>
+                    <option value="orders" {% if request.GET.type == "orders" %}selected{% endif %}>Orders</option>
+                    <option value="projects" {% if request.GET.type == "projects" %}selected{% endif %}>Projects</option>
+                    <option value="vendors" {% if request.GET.type == "vendors" %}selected{% endif %}>Vendors</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary btn-lg w-100">
+                    <i class="bi bi-search"></i> Search
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if request.GET.q %}
+<!-- Search Results -->
+<div class="row">
+    <!-- Parts Results -->
+    {% if parts %}
+    <div class="col-md-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-gear"></i> Parts ({{ parts.count }})
+                </h6>
+            </div>
+            <div class="card-body">
+                {% for part in parts %}
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h6 class="mb-1">{{ part.name }}</h6>
+                        <p class="text-muted mb-0">{{ part.part_number }} - {{ part.category.name }}</p>
+                    </div>
+                    <a href="{% url 'parts:part_detail' part.id %}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-eye"></i> View
+                    </a>
+                </div>
+                {% if not forloop.last %}<hr>{% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Orders Results -->
+    {% if orders %}
+    <div class="col-md-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-cart"></i> Orders ({{ orders.count }})
+                </h6>
+            </div>
+            <div class="card-body">
+                {% for order in orders %}
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h6 class="mb-1">{{ order.order_number }}</h6>
+                        <p class="text-muted mb-0">{{ order.vendor.company_name }} - ${{ order.total_amount|floatformat:2 }}</p>
+                    </div>
+                    <a href="{% url 'orders:order_detail' order.id %}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-eye"></i> View
+                    </a>
+                </div>
+                {% if not forloop.last %}<hr>{% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Projects Results -->
+    {% if projects %}
+    <div class="col-md-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-folder"></i> Projects ({{ projects.count }})
+                </h6>
+            </div>
+            <div class="card-body">
+                {% for project in projects %}
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h6 class="mb-1">{{ project.name }}</h6>
+                        <p class="text-muted mb-0">{{ project.project_code }} - {{ project.get_status_display }}</p>
+                    </div>
+                    <a href="{% url 'orders:project_detail' project.id %}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-eye"></i> View
+                    </a>
+                </div>
+                {% if not forloop.last %}<hr>{% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Vendors Results -->
+    {% if vendors %}
+    <div class="col-md-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-building"></i> Vendors ({{ vendors.count }})
+                </h6>
+            </div>
+            <div class="card-body">
+                {% for vendor in vendors %}
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h6 class="mb-1">{{ vendor.company_name }}</h6>
+                        <p class="text-muted mb-0">{{ vendor.contact_person }} - {{ vendor.email }}</p>
+                    </div>
+                    <a href="{% url 'orders:vendor_detail' vendor.id %}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-eye"></i> View
+                    </a>
+                </div>
+                {% if not forloop.last %}<hr>{% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- No Results -->
+{% if not parts and not orders and not projects and not vendors %}
+<div class="text-center py-5">
+    <i class="bi bi-search text-muted" style="font-size: 3rem;"></i>
+    <h5 class="text-muted mt-3">No results found</h5>
+    <p class="text-muted">Try adjusting your search terms or filters.</p>
+</div>
+{% endif %}
+
+{% else %}
+<!-- Search Tips -->
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Search Tips</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Search by part numbers, names, or descriptions</li>
+                    <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Find orders by order number or vendor name</li>
+                    <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Look up projects by name or project code</li>
+                    <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Search vendors by company name or contact person</li>
+                    <li class="mb-0"><i class="bi bi-check-circle text-success me-2"></i>Use filters to narrow down your search results</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'parts:part_list' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-gear"></i> Browse Parts
+                    </a>
+                    <a href="{% url 'orders:order_list' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-cart"></i> View Orders
+                    </a>
+                    <a href="{% url 'orders:project_list' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-folder"></i> View Projects
+                    </a>
+                    <a href="{% url 'core:qr_scanner' %}" class="btn btn-outline-success">
+                        <i class="bi bi-qr-code-scan"></i> Scan QR Code
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
