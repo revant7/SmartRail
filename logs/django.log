@@ -605,3 +605,13 @@ Traceback (most recent call last):
   File "/mnt/c/Users/91772/Desktop/My Work and Projects/QRailway/venv/lib/python3.12/site-packages/django/template/loader.py", line 19, in get_template
     raise TemplateDoesNotExist(template_name, chain=chain)
 django.template.exceptions.TemplateDoesNotExist: notifications/preferences.html
+INFO 2025-09-05 18:05:41,467 autoreload 88115 134607391355008 Watching for file changes with StatReloader
+INFO 2025-09-05 18:15:59,953 autoreload 88115 134607391355008 /mnt/c/Users/91772/Desktop/My Work and Projects/QRailway/QRAILWAY/inspections/forms.py changed, reloading.
+INFO 2025-09-05 18:16:41,944 autoreload 90852 136235488923776 Watching for file changes with StatReloader
+INFO 2025-09-05 18:18:34,479 autoreload 90852 136235488923776 /mnt/c/Users/91772/Desktop/My Work and Projects/QRailway/QRAILWAY/inspections/models.py changed, reloading.
+INFO 2025-09-05 18:19:08,837 autoreload 91795 137220199866496 Watching for file changes with StatReloader
+INFO 2025-09-05 18:20:55,236 autoreload 91795 137220199866496 /mnt/c/Users/91772/Desktop/My Work and Projects/QRailway/QRAILWAY/inspections/models.py changed, reloading.
+INFO 2025-09-05 18:21:39,427 autoreload 92476 133912607604864 Watching for file changes with StatReloader
+INFO 2025-09-05 18:24:54,274 autoreload 92476 133912607604864 /mnt/c/Users/91772/Desktop/My Work and Projects/QRailway/QRAILWAY/inspections/forms.py changed, reloading.
+INFO 2025-09-05 18:25:11,842 autoreload 93501 131458953891968 Watching for file changes with StatReloader
+INFO 2025-09-05 18:47:51,372 autoreload 97931 128516476784768 Watching for file changes with StatReloader

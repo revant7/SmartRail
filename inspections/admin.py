@@ -24,15 +24,15 @@ class OnlineInspectionAdmin(admin.ModelAdmin):
         'stage', 'status', 'result', 'inspection_date', 'stage__stage_type'
     ]
     search_fields = [
-        'inspection_id', 'requirement__title', 'part__name', 
+        'inspection_id', 'requirement__title', 
         'findings', 'issues_found'
     ]
     readonly_fields = ['inspection_id', 'created_at', 'updated_at']
-    raw_id_fields = ['requirement', 'part', 'order']
+    raw_id_fields = ['requirement']
     
     fieldsets = (
         ('Basic Information', {
-            'fields': ('inspection_id', 'stage', 'requirement', 'part', 'order')
+            'fields': ('inspection_id', 'stage', 'requirement')
         }),
         ('Status & Results', {
             'fields': ('status', 'result', 'quality_rating', 'overall_score')

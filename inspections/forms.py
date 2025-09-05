@@ -37,7 +37,7 @@ class OnlineInspectionForm(forms.ModelForm):
     class Meta:
         model = OnlineInspection
         fields = [
-            'stage', 'requirement', 'part', 'order', 'findings', 'issues_found',
+            'stage', 'requirement', 'findings', 'issues_found',
             'recommendations', 'corrective_actions', 'overview_notes',
             'inspection_location', 'railway_zone', 'railway_division',
             'track_section', 'kilometer_marker', 'latitude', 'longitude',
@@ -51,8 +51,6 @@ class OnlineInspectionForm(forms.ModelForm):
             'overview_notes': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
             'stage': forms.Select(attrs={'class': 'form-control'}),
             'requirement': forms.Select(attrs={'class': 'form-control'}),
-            'part': forms.Select(attrs={'class': 'form-control'}),
-            'order': forms.Select(attrs={'class': 'form-control'}),
             'inspection_location': forms.TextInput(attrs={'class': 'form-control'}),
             'railway_zone': forms.TextInput(attrs={'class': 'form-control'}),
             'railway_division': forms.TextInput(attrs={'class': 'form-control'}),
@@ -86,12 +84,10 @@ class OnlineInspectionForm(forms.ModelForm):
         cleaned_data = super().clean()
         stage = cleaned_data.get('stage')
         requirement = cleaned_data.get('requirement')
-        part = cleaned_data.get('part')
-        order = cleaned_data.get('order')
         
-        # At least one related object must be selected
-        if not any([requirement, part, order]):
-            raise ValidationError("At least one related object (requirement, part, or order) must be selected.")
+        # Requirement must be selected
+        if not requirement:
+            raise ValidationError("A requirement must be selected.")
         
         # Validate stage requirements
         if stage:

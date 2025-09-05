@@ -223,12 +223,11 @@ class OnlineInspection(models.Model):
         indexes = [
             models.Index(fields=['stage', 'status']),
             models.Index(fields=['requirement', 'stage']),
-            models.Index(fields=['part', 'stage']),
             models.Index(fields=['inspection_date']),
         ]
     
     def __str__(self):
-        return f"{self.stage.name} - {self.requirement or self.part or self.order} ({self.get_status_display()})"
+        return f"{self.stage.name} - {self.requirement} ({self.get_status_display()})"
     
     def get_participants(self):
         """Get all participants in this inspection."""
