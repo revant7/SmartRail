@@ -58,21 +58,29 @@ class EquipmentBatch(models.Model):
     Equipment batch tracking with UUID for QR code scanning.
     """
     batch_uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    batch_number = models.CharField(max_length=50, unique=True, null=True, blank=True, help_text="Unique batch number for this equipment batch")
     batch_name = models.CharField(max_length=200)
-    equipment_type = models.CharField(max_length=100)
+    equipment_type = models.CharField(
+        max_length=100,
+        choices=[
+            ('LINERS', 'Liners'),
+            ('PADS', 'Pads'),
+            ('CLIPS', 'Clips'),
+        ]
+    )
     manufacturer = models.CharField(max_length=200, blank=True)
     model_number = models.CharField(max_length=100, blank=True)
     serial_number = models.CharField(max_length=100, blank=True)
     manufacturing_date = models.DateField(null=True, blank=True)
     warranty_expiry = models.DateField(null=True, blank=True)
     
-    # Related Objects
+    # Related Objects - requirement is now required for new records
     requirement = models.ForeignKey(
         Requirement,
         on_delete=models.CASCADE,
         related_name='equipment_batches',
-        null=True,
-        blank=True
+        null=True,  # For backward compatibility with existing records
+        blank=False
     )
     part = models.ForeignKey(
         Part,
@@ -357,6 +365,13 @@ class InspectionPhoto(models.Model):
         OnlineInspection,
         on_delete=models.CASCADE,
         related_name='photos'
+    )
+    equipment_batch = models.ForeignKey(
+        EquipmentBatch,
+        on_delete=models.CASCADE,
+        related_name='photos',
+        null=True,
+        blank=True
     )
     photo_type = models.CharField(
         max_length=20,

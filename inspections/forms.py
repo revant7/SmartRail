@@ -5,7 +5,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from .models import (
     OnlineInspection, InspectionPhoto, InspectionDocument,
-    InspectionChecklistResponse, InspectionStage
+    InspectionChecklistResponse, InspectionStage, EquipmentBatch
 )
 from railway.models import Requirement
 from parts.models import Part
@@ -34,40 +34,42 @@ class OnlineInspectionForm(forms.ModelForm):
     """
     Form for creating and updating online inspections.
     """
+    # Pre-populated dropdown choices
+    railway_zone = forms.ChoiceField(choices=[], required=False)
+    railway_division = forms.ChoiceField(choices=[], required=False)
+    
     class Meta:
         model = OnlineInspection
         fields = [
-            'stage', 'requirement', 'findings', 'issues_found',
-            'recommendations', 'corrective_actions', 'overview_notes',
-            'inspection_location', 'railway_zone', 'railway_division',
-            'track_section', 'kilometer_marker', 'latitude', 'longitude',
-            'quality_rating', 'overall_score', 'result'
+            'stage', 'requirement', 'equipment_batch', 'findings', 
+            'issues_found', 'recommendations', 'corrective_actions', 
+            'overview_notes', 'inspection_location', 'railway_zone', 
+            'railway_division', 'track_section', 'kilometer_marker', 
+            'latitude', 'longitude', 'quality_rating', 'overall_score', 'result'
         ]
         widgets = {
+            'stage': forms.Select(attrs={'class': 'form-select'}),
+            'requirement': forms.Select(attrs={'class': 'form-select'}),
+            'equipment_batch': forms.Select(attrs={'class': 'form-select'}),
             'findings': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
             'issues_found': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
             'recommendations': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
             'corrective_actions': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
             'overview_notes': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
-            'stage': forms.Select(attrs={'class': 'form-control'}),
-            'requirement': forms.Select(attrs={'class': 'form-control'}),
             'inspection_location': forms.TextInput(attrs={'class': 'form-control'}),
-            'railway_zone': forms.TextInput(attrs={'class': 'form-control'}),
-            'railway_division': forms.TextInput(attrs={'class': 'form-control'}),
             'track_section': forms.TextInput(attrs={'class': 'form-control'}),
             'kilometer_marker': forms.TextInput(attrs={'class': 'form-control'}),
             'latitude': forms.NumberInput(attrs={'class': 'form-control', 'step': 'any'}),
             'longitude': forms.NumberInput(attrs={'class': 'form-control', 'step': 'any'}),
-            'quality_rating': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1', 'min': '0', 'max': '10'}),
-            'overall_score': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0', 'max': '100'}),
-            'result': forms.Select(attrs={'class': 'form-control'}),
+            'quality_rating': forms.NumberInput(attrs={'class': 'form-select', 'step': '0.1', 'min': '0', 'max': '10'}),
+            'overall_score': forms.NumberInput(attrs={'class': 'form-select', 'step': '0.01', 'min': '0', 'max': '100'}),
         }
     
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         
-        # Filter choices based on user type
+        # Filter requirements based on user type
         if user:
             if user.user_type == 'VENDOR':
                 self.fields['requirement'].queryset = Requirement.objects.filter(
@@ -79,6 +81,37 @@ class OnlineInspectionForm(forms.ModelForm):
                 self.fields['requirement'].queryset = Requirement.objects.filter(
                     status__in=['ACTIVE', 'SHIPPED', 'RECEIVED', 'INSTALLED']
                 )
+        
+        # Populate railway zone and division dropdowns
+        from railway.models import RailwayZone, RailwayDivision
+        
+        # Get zones for dropdown
+        zones = RailwayZone.objects.all()
+        zone_choices = [('', '-- Select Zone --')] + [(zone.id, zone.name) for zone in zones]
+        self.fields['railway_zone'] = forms.ChoiceField(
+            choices=zone_choices, 
+            required=False, 
+            widget=forms.Select(attrs={'class': 'form-select'})
+        )
+        
+        # Get divisions for dropdown
+        divisions = RailwayDivision.objects.all()
+        division_choices = [('', '-- Select Division --')] + [(div.id, div.name) for div in divisions]
+        self.fields['railway_division'] = forms.ChoiceField(
+            choices=division_choices, 
+            required=False,
+            widget=forms.Select(attrs={'class': 'form-select'})
+        )
+        
+        # Populate equipment_batch dropdown based on selected requirement
+        if 'requirement' in self.data:
+            try:
+                req_id = int(self.data.get('requirement'))
+                self.fields['equipment_batch'].queryset = EquipmentBatch.objects.filter(requirement_id=req_id)
+            except (ValueError, TypeError):
+                pass
+        elif self.instance.pk and self.instance.requirement:
+            self.fields['equipment_batch'].queryset = self.instance.requirement.equipment_batches.all()
     
     def clean(self):
         cleaned_data = super().clean()
@@ -107,11 +140,17 @@ class InspectionPhotoForm(forms.ModelForm):
     """
     Form for uploading inspection photos.
     """
+    equipment_batch = forms.ModelChoiceField(
+        queryset=EquipmentBatch.objects.all(),
+        required=True,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    
     class Meta:
         model = InspectionPhoto
-        fields = ['photo_type', 'image', 'caption', 'description', 'latitude', 'longitude']
+        fields = ['equipment_batch', 'photo_type', 'image', 'caption', 'description', 'latitude', 'longitude']
         widgets = {
-            'photo_type': forms.Select(attrs={'class': 'form-control'}),
+            'photo_type': forms.Select(attrs={'class': 'form-select'}),
             'image': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
             'caption': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),

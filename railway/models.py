@@ -269,6 +269,8 @@ class Requirement(models.Model):
         """
         Generate QR code for the requirement.
         """
+        import json
+        
         qr = qrcode.QRCode(
             version=1,
             error_correction=qrcode.constants.ERROR_CORRECT_L,
@@ -276,10 +278,13 @@ class Requirement(models.Model):
             border=4,
         )
         
-        # QR code contains only the UUID for scanning
-        qr_data = str(self.requirement_id)
+        # Create JSON data with requirement ID and URL
+        qr_data = {
+            'requirement_id': str(self.requirement_id),
+            'url': f"/railway/requirement/{self.requirement_id}/"
+        }
         
-        qr.add_data(qr_data)
+        qr.add_data(json.dumps(qr_data))
         qr.make(fit=True)
         
         img = qr.make_image(fill_color="black", back_color="white")
