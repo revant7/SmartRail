@@ -1,0 +1,262 @@
+{% extends 'base.html' %}
+
+{% block title %}QR Code Scanner{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3>QR Code Scanner</h3>
+                </div>
+                <div class="card-body">
+                    <p class="lead">Scan QR codes using ESP32 camera or upload directly</p>
+                    
+                    <div class="alert alert-info">
+                        <p>This tool helps you scan QR codes and automatically redirect to the associated requirement page.</p>
+                    </div>
+                    
+                    <!-- Tab navigation -->
+                    <ul class="nav nav-tabs mb-4" id="scannerTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="esp32-tab" data-bs-toggle="tab" data-bs-target="#esp32" type="button" role="tab" aria-controls="esp32" aria-selected="true">ESP32 Camera</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload" type="button" role="tab" aria-controls="upload" aria-selected="false">Manual Upload</button>
+                        </li>
+                    </ul>
+                    
+                    <!-- Tab content -->
+                    <div class="tab-content" id="scannerTabsContent">
+                        <!-- ESP32 Camera Tab -->
+                        <div class="tab-pane fade show active" id="esp32" role="tabpanel" aria-labelledby="esp32-tab">
+                            <div class="text-center mb-4">
+                                <h4>ESP32 Camera Integration</h4>
+                                <p>Click the button below to trigger the ESP32 camera to scan a QR code.</p>
+                                
+                                <button id="trigger-esp32" class="btn btn-lg btn-primary">
+                                    <i class="bi bi-camera"></i> Trigger ESP32 Camera
+                                </button>
+                            </div>
+                            
+                            <div id="esp32-status" class="alert alert-info text-center" style="display: none;">
+                                <div class="spinner-border text-primary me-2" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <span id="esp32-status-message">Triggering ESP32 camera...</span>
+                            </div>
+                            
+                            <div id="esp32-result" class="mt-4" style="display: none;">
+                                <h5>Camera Response</h5>
+                                <div id="esp32-result-content" class="bg-light p-3 rounded"></div>
+                                <div class="text-center mt-3">
+                                    <a id="esp32-redirect-link" href="#" class="btn btn-success" style="display: none;">
+                                        Go to Requirement Page
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Manual Upload Tab -->
+                        <div class="tab-pane fade" id="upload" role="tabpanel" aria-labelledby="upload-tab">
+                            <form id="qr-scanner-form" enctype="multipart/form-data">
+                                <div class="mb-3">
+                                    <label for="qr-image" class="form-label">QR Code Image</label>
+                                    <input type="file" class="form-control" id="qr-image" name="image" accept="image/*" required>
+                                    <div class="form-text">Upload an image containing a QR code.</div>
+                                </div>
+                                
+                                <div class="mb-3 form-check">
+                                    <input type="checkbox" class="form-check-input" id="redirect-checkbox" name="redirect">
+                                    <label class="form-check-label" for="redirect-checkbox">Automatically redirect to QR code URL</label>
+                                </div>
+                                
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary">Scan QR Code</button>
+                                </div>
+                            </form>
+                            
+                            <div id="result-container" class="mt-4" style="display: none;">
+                                <h5>Scan Result</h5>
+                                <pre id="scan-result" class="bg-light p-3 rounded"></pre>
+                                <div class="text-center mt-3">
+                                    <a id="manual-redirect-link" href="#" class="btn btn-success" style="display: none;">
+                                        Go to Requirement Page
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Manual upload form handling
+        const form = document.getElementById('qr-scanner-form');
+        const resultContainer = document.getElementById('result-container');
+        const scanResult = document.getElementById('scan-result');
+        const manualRedirectLink = document.getElementById('manual-redirect-link');
+        
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            const redirectCheckbox = document.getElementById('redirect-checkbox');
+            
+            let url = '{% url "inspections:scan_qr_code_api" %}';
+            if (redirectCheckbox.checked) {
+                url += '?redirect=true';
+                
+                // If redirect is checked, submit the form normally
+                form.method = 'POST';
+                form.action = url;
+                form.submit();
+                return;
+            }
+            
+            // If not redirecting, use AJAX
+            fetch(url, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                resultContainer.style.display = 'block';
+                scanResult.textContent = JSON.stringify(data, null, 2);
+                
+                if (data.success && data.url) {
+                    // Show redirect link
+                    manualRedirectLink.href = data.url;
+                    manualRedirectLink.style.display = 'inline-block';
+                } else {
+                    manualRedirectLink.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                resultContainer.style.display = 'block';
+                scanResult.textContent = 'Error: ' + error.message;
+                manualRedirectLink.style.display = 'none';
+            });
+        });
+        
+        // ESP32 camera integration
+        const triggerButton = document.getElementById('trigger-esp32');
+        const esp32Status = document.getElementById('esp32-status');
+        const esp32StatusMessage = document.getElementById('esp32-status-message');
+        const esp32Result = document.getElementById('esp32-result');
+        const esp32ResultContent = document.getElementById('esp32-result-content');
+        const esp32RedirectLink = document.getElementById('esp32-redirect-link');
+        
+        // Poll interval for checking QR scan results
+        let pollInterval = null;
+        
+        // Function to check if QR code has been scanned
+        function checkQrStatus() {
+            fetch('{% url "inspections:get_esp32_qr_status" %}')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.redirect_url) {
+                        // QR code scan was successful
+                        clearInterval(pollInterval);
+                        
+                        // Update UI
+                        esp32Status.style.display = 'none';
+                        esp32Result.style.display = 'block';
+                        esp32ResultContent.innerHTML = '<div class="alert alert-success">QR code scanned successfully!</div>';
+                        
+                        // Show redirect link
+                        esp32RedirectLink.href = data.redirect_url;
+                        esp32RedirectLink.style.display = 'inline-block';
+                        
+                        // Optional: Automatically redirect after a short delay
+                        setTimeout(() => {
+                            window.location.href = data.redirect_url;
+                        }, 2000);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking QR status:', error);
+                });
+        }
+        
+        triggerButton.addEventListener('click', function() {
+            // Show status message
+            esp32Status.style.display = 'block';
+            esp32StatusMessage.textContent = 'Triggering ESP32 camera...';
+            
+            // Hide result container if it was previously shown
+            esp32Result.style.display = 'none';
+            esp32RedirectLink.style.display = 'none';
+            
+            // Trigger ESP32 camera (hardware at http://60.70.0.229/receive)
+            fetch('{% url "inspections:trigger_esp32_camera" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify({
+                    device_url: '{{ esp32_url }}' // Pass the ESP32 URL from context
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Camera triggered successfully, now wait for scan result
+                    esp32StatusMessage.textContent = 'Waiting for ESP32 camera to send QR code image...';
+                    
+                    // Start polling for QR scan result
+                    if (pollInterval) {
+                        clearInterval(pollInterval);
+                    }
+                    // Use polling interval from context, default to 2000ms (2 seconds)
+                    const pollingMs = {% if poll_interval %}{{ poll_interval }}{% else %}2000{% endif %};
+                    pollInterval = setInterval(checkQrStatus, pollingMs);
+                    
+                    // Set a timeout to stop polling after 30 seconds
+                    setTimeout(() => {
+                        if (pollInterval) {
+                            clearInterval(pollInterval);
+                            
+                            // Only update UI if still in waiting state
+                            if (esp32Status.style.display !== 'none') {
+                                esp32Status.style.display = 'none';
+                                esp32Result.style.display = 'block';
+                                esp32ResultContent.innerHTML = '<div class="alert alert-danger">Timeout waiting for ESP32 camera response.</div>';
+                            }
+                        }
+                    }, 30000);
+                } else {
+                    // Error triggering camera
+                    esp32Status.style.display = 'none';
+                    esp32Result.style.display = 'block';
+                    esp32ResultContent.innerHTML = `<div class="alert alert-danger">Error: ${data.message}</div>`;
+                }
+            })
+            .catch(error => {
+                esp32Status.style.display = 'none';
+                esp32Result.style.display = 'block';
+                esp32ResultContent.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+            });
+        });
+        
+        // Helper function to get CSRF token
+        function getCsrfToken() {
+            const csrfCookie = document.cookie.split(';')
+                .find(cookie => cookie.trim().startsWith('csrftoken='));
+            
+            if (csrfCookie) {
+                return csrfCookie.split('=')[1];
+            }
+            return '';
+        }
+    });
+</script>
+{% endblock %}

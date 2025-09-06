@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}ESP32 Camera Tools{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3>ESP32 Camera Tools</h3>
+                </div>
+                <div class="card-body">
+                    <p class="lead">Select a tool to interact with ESP32 camera</p>
+                    
+                    <div class="alert alert-info">
+                        <p>These tools help you interact with the ESP32 camera module for QR code scanning.</p>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header bg-secondary text-white">
+                                    ESP32 Controller
+                                </div>
+                                <div class="card-body">
+                                    <p>Advanced controller for the ESP32 camera module. Allows sending commands and capturing images.</p>
+                                    <div class="d-grid">
+                                        <a href="{% url 'inspections:esp32_controller_page' %}" class="btn btn-primary">
+                                            <i class="bi bi-camera"></i> Controller
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header bg-secondary text-white">
+                                    QR Scanner
+                                </div>
+                                <div class="card-body">
+                                    <p>Scan QR codes using the ESP32 camera or by uploading images manually.</p>
+                                    <div class="d-grid">
+                                        <a href="{% url 'inspections:qr_code_scanner_page' %}" class="btn btn-success">
+                                            <i class="bi bi-qr-code-scan"></i> QR Scanner
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header bg-secondary text-white">
+                                    Direct ESP32 Scan
+                                </div>
+                                <div class="card-body">
+                                    <p>One-step process to trigger the ESP32, capture an image, and scan for QR codes.</p>
+                                    <div class="d-grid">
+                                        <a href="{% url 'inspections:direct_esp32_scan' %}?redirect=true" class="btn btn-info">
+                                            <i class="bi bi-lightning"></i> Quick Scan
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header bg-secondary text-white">
+                                    Mock ESP32
+                                </div>
+                                <div class="card-body">
+                                    <p>Testing tool that simulates an ESP32 camera for development and testing.</p>
+                                    <div class="d-grid">
+                                        <a href="{% url 'inspections:mock_esp32_ui' %}" class="btn btn-warning">
+                                            <i class="bi bi-device-ssd"></i> Mock ESP32
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'inspections:dashboard' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to Dashboard
+                        </a>
+                        
+                        <div class="btn-group">
+                            <a href="{% url 'inspections:trigger_esp32_camera' %}" class="btn btn-outline-primary" target="_blank">
+                                <i class="bi bi-send"></i> Trigger ESP32
+                            </a>
+                            <a href="{% url 'inspections:esp32_capture_endpoint' %}" class="btn btn-outline-success" target="_blank">
+                                <i class="bi bi-camera"></i> Capture
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

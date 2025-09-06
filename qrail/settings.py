@@ -240,3 +240,14 @@ EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@qrail.com')
+
+# ESP32 Camera Integration Settings
+ESP32_CAMERA_ENABLED = config('ESP32_CAMERA_ENABLED', default=True, cast=bool)
+ESP32_CAMERA_URL = config('ESP32_CAMERA_URL', default='http://esp32-camera.local/capture')
+ESP32_TRIGGER_URL = config('ESP32_TRIGGER_URL', default='http://esp32-camera.local/trigger')
+ESP32_TIMEOUT = config('ESP32_TIMEOUT', default=5, cast=int)  # seconds
+
+# ESP32 Integration for Railway QR System
+ESP32_IP = config('ESP32_IP', default='http://192.168.1.50')
+ESP32_RECEIVE_URL = config('ESP32_RECEIVE_URL', default='http://192.168.1.50/receive')
+ESP32_CAPTURE_URL = config('ESP32_CAPTURE_URL', default='http://192.168.1.50/capture')

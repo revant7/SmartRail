@@ -28,14 +28,10 @@ def generate_qr_code_for_batch(batch, size=200):
         border=4,
     )
     
-    # Create JSON data to be encoded in the QR code
-    qr_data = {
-        'requirement_id': str(batch.requirement.requirement_id),
-        'batch_number': batch.batch_number,
-        'url': f"/railway/requirement/{batch.requirement.requirement_id}/"
-    }
+    # Use direct URL in QR code for immediate redirection
+    qr_data = f"/railway/requirements/{batch.requirement.requirement_id}/"
     
-    qr.add_data(json.dumps(qr_data))
+    qr.add_data(qr_data)
     qr.make(fit=True)
     
     img = qr.make_image(fill_color="black", back_color="white")
@@ -94,64 +90,115 @@ def generate_qr_codes_for_all_batches():
 
 def validate_qr_code_data(qr_data):
     """
-    Validate if QR code data contains valid requirement and batch data.
+    Validate if QR code data contains a valid URL.
     
     Args:
-        qr_data: String data from QR code (JSON format)
+        qr_data: String data from QR code (URL format)
     
     Returns:
-        dict with validation result and batch info if valid
+        dict with validation result and requirement info if valid
     """
     try:
-        # Try to parse as JSON
-        data = json.loads(qr_data)
+        # Format of URL is expected to be: /railway/requirements/{uuid}/
+        parts = qr_data.strip('/').split('/')
         
-        # Validate JSON structure
-        if not all(key in data for key in ['requirement_id', 'batch_number']):
+        if len(parts) < 3 or 'requirements' not in parts:
             return {
                 'valid': False,
-                'message': 'Invalid QR code format - missing required fields'
+                'message': 'Invalid QR code URL format'
             }
+        
+        # Find the index of 'requirements' and get the UUID that should follow it
+        req_index = parts.index('requirements')
+        if req_index + 1 >= len(parts):
+            return {
+                'valid': False,
+                'message': 'Missing requirement UUID in QR code URL'
+            }
+            
+        requirement_id = parts[req_index + 1]
         
         # Get requirement
         from railway.models import Requirement
         try:
-            requirement = Requirement.objects.get(requirement_id=data['requirement_id'])
+            requirement = Requirement.objects.get(requirement_id=requirement_id)
+            
+            return {
+                'valid': True,
+                'requirement': requirement,
+                'message': 'Valid requirement found'
+            }
         except Requirement.DoesNotExist:
             return {
                 'valid': False,
-                'requirement_id': data['requirement_id'],
+                'requirement_id': requirement_id,
                 'message': 'Requirement not found'
             }
-        
-        # Check if batch exists
-        try:
-            batch = EquipmentBatch.objects.get(batch_number=data['batch_number'])
-            return {
-                'valid': True,
-                'requirement': requirement,
-                'batch_number': data['batch_number'],
-                'batch': batch,
-                'message': 'Valid equipment batch found'
-            }
-        except EquipmentBatch.DoesNotExist:
-            return {
-                'valid': True,
-                'requirement': requirement,
-                'batch_number': data['batch_number'],
-                'batch': None,
-                'message': 'Valid requirement found but batch not found'
-            }
             
-    except (ValueError, json.JSONDecodeError):
-        return {
-            'valid': False,
-            'message': 'Invalid QR code format - cannot parse JSON data'
-        }
     except Exception as e:
         return {
             'valid': False,
             'message': f'Error validating QR code: {str(e)}'
+        }
+
+
+def scan_qr_code_image(image_data):
+    """
+    Scan a QR code from an image and extract the URL.
+    
+    Args:
+        image_data: Image data as bytes or file-like object
+        
+    Returns:
+        Dictionary with decoded data and status
+    """
+    import cv2
+    import numpy as np
+    from pyzbar.pyzbar import decode
+    
+    try:
+        # Convert image data to numpy array
+        nparr = np.frombuffer(image_data, np.uint8)
+        image = cv2.imdecode(nparr, cv2.IMREAD_GRAYSCALE)
+        
+        # Check if image was loaded successfully
+        if image is None:
+            return {
+                'success': False,
+                'message': 'Failed to decode image data'
+            }
+        
+        # Decode QR code
+        decoded_objects = decode(image)
+        
+        if not decoded_objects:
+            return {
+                'success': False,
+                'message': 'No QR code found in the image'
+            }
+        
+        # Get the data from the first QR code
+        qr_data = decoded_objects[0].data.decode('utf-8')
+        
+        # Validate the QR code data
+        validation = validate_qr_code_data(qr_data)
+        
+        if validation.get('valid', False):
+            return {
+                'success': True,
+                'url': qr_data,
+                'requirement': validation.get('requirement')
+            }
+        else:
+            return {
+                'success': False,
+                'message': validation.get('message', 'Invalid QR code data')
+            }
+            
+    except Exception as e:
+        return {
+            'success': False,
+            'message': f'Error scanning QR code: {str(e)}'
         }
 
 

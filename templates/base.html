@@ -87,6 +87,11 @@
                                 <i class="bi bi-list-task"></i> Requirements
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'inspections:qr_code_scanner_streamlined' %}">
+                                <i class="bi bi-qr-code-scan"></i> QR Scanner
+                            </a>
+                        </li>
                         {% if user.is_vendor %}
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'railway:vendor_request_list' %}">

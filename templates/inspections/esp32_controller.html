@@ -1,0 +1,304 @@
+{% extends 'base.html' %}
+
+{% block title %}ESP32 Camera Controller{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3>ESP32 Camera Controller</h3>
+                </div>
+                <div class="card-body">
+                    <p class="lead">Control the ESP32 camera and view captured images</p>
+                    
+                    <div class="alert alert-info mb-4">
+                        <p><strong>ESP32 IP Address:</strong> <span id="esp32-ip">{{ esp32_ip }}</span></p>
+                        <p class="mb-0">Use the buttons below to interact with your ESP32 camera module.</p>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-secondary text-white">
+                                    Send Command
+                                </div>
+                                <div class="card-body">
+                                    <p>Send a command to trigger the ESP32 camera</p>
+                                    <div class="d-grid">
+                                        <button id="send-command-btn" class="btn btn-primary">
+                                            <i class="bi bi-send"></i> Send Trigger Signal
+                                        </button>
+                                    </div>
+                                    <div id="command-response" class="mt-3" style="display: none;">
+                                        <h6>Response:</h6>
+                                        <pre id="command-response-text" class="bg-light p-2 rounded"></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-secondary text-white">
+                                    Capture Image
+                                </div>
+                                <div class="card-body">
+                                    <p>Capture an image from the ESP32 camera</p>
+                                    <div class="d-grid">
+                                        <button id="capture-image-btn" class="btn btn-success">
+                                            <i class="bi bi-camera"></i> Capture Image
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="image-container" class="text-center" style="display: none;">
+                        <h4 class="mb-3">Captured Image</h4>
+                        <div class="mb-3">
+                            <img id="captured-image" src="" alt="Captured Image" class="img-fluid rounded border shadow-sm" style="max-height: 400px;">
+                        </div>
+                        <div class="btn-group mb-4">
+                            <button id="save-image-btn" class="btn btn-outline-primary">
+                                <i class="bi bi-download"></i> Save Image
+                            </button>
+                            <a id="download-image-link" download="esp32_capture.jpg" class="btn btn-outline-secondary">
+                                <i class="bi bi-file-earmark-arrow-down"></i> Download
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div id="status-container" class="mt-3" style="display: none;">
+                        <div class="alert" id="status-alert">
+                            <span id="status-message"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="{% url 'inspections:qr_code_scanner_page' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-qr-code-scan"></i> Go to QR Scanner
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const esp32IP = document.getElementById('esp32-ip').textContent.trim();
+        const sendCommandBtn = document.getElementById('send-command-btn');
+        const captureImageBtn = document.getElementById('capture-image-btn');
+        const commandResponse = document.getElementById('command-response');
+        const commandResponseText = document.getElementById('command-response-text');
+        const imageContainer = document.getElementById('image-container');
+        const capturedImage = document.getElementById('captured-image');
+        const saveImageBtn = document.getElementById('save-image-btn');
+        const downloadImageLink = document.getElementById('download-image-link');
+        const statusContainer = document.getElementById('status-container');
+        const statusAlert = document.getElementById('status-alert');
+        const statusMessage = document.getElementById('status-message');
+        
+        // Function to show status message
+        function showStatus(message, type) {
+            statusContainer.style.display = 'block';
+            statusAlert.className = 'alert alert-' + type;
+            statusMessage.textContent = message;
+            
+            // Auto hide after 5 seconds
+            setTimeout(() => {
+                statusContainer.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Send command to ESP32
+        sendCommandBtn.addEventListener('click', function() {
+            // Disable button while request is in progress
+            sendCommandBtn.disabled = true;
+            sendCommandBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Sending...';
+            
+            // Send POST request to ESP32
+            fetch(esp32IP + '/receive', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'data=yes'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.text();
+            })
+            .then(data => {
+                // Display the response
+                commandResponse.style.display = 'block';
+                commandResponseText.textContent = data;
+                
+                // Show success message
+                showStatus('Command sent successfully', 'success');
+            })
+            .catch(error => {
+                console.error('Error sending command:', error);
+                
+                // Display the error
+                commandResponse.style.display = 'block';
+                commandResponseText.textContent = 'Error: ' + error.message;
+                
+                // Try the local API endpoint as fallback
+                showStatus('Error connecting directly to ESP32. Trying local endpoint...', 'warning');
+                
+                // Use our Django endpoint instead of direct ESP32 connection
+                return fetch('{% url "inspections:esp32_receive_endpoint" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: 'data=yes'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    commandResponse.style.display = 'block';
+                    commandResponseText.textContent = JSON.stringify(data, null, 2);
+                    showStatus('Command sent to local endpoint successfully', 'success');
+                });
+            })
+            .finally(() => {
+                // Re-enable button
+                sendCommandBtn.disabled = false;
+                sendCommandBtn.innerHTML = '<i class="bi bi-send"></i> Send Trigger Signal';
+            });
+        });
+        
+        // Capture image from ESP32
+        captureImageBtn.addEventListener('click', function() {
+            // Disable button while request is in progress
+            captureImageBtn.disabled = true;
+            captureImageBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Capturing...';
+            
+            // Get the image from ESP32
+            fetch(esp32IP + '/capture')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                // Create object URL from blob
+                const imageUrl = URL.createObjectURL(blob);
+                
+                // Display the image
+                capturedImage.src = imageUrl;
+                imageContainer.style.display = 'block';
+                
+                // Update download link
+                downloadImageLink.href = imageUrl;
+                
+                // Show success message
+                showStatus('Image captured successfully', 'success');
+            })
+            .catch(error => {
+                console.error('Error capturing image:', error);
+                
+                // Show error message
+                showStatus('Error capturing image: ' + error.message + '. Trying local endpoint...', 'danger');
+                
+                // Use our Django endpoint instead of direct ESP32 connection
+                return fetch('{% url "inspections:esp32_capture_endpoint" %}')
+                .then(response => response.blob())
+                .then(blob => {
+                    // Create object URL from blob
+                    const imageUrl = URL.createObjectURL(blob);
+                    
+                    // Display the image
+                    capturedImage.src = imageUrl;
+                    imageContainer.style.display = 'block';
+                    
+                    // Update download link
+                    downloadImageLink.href = imageUrl;
+                    
+                    // Show success message
+                    showStatus('Image captured from local endpoint successfully', 'success');
+                });
+            })
+            .finally(() => {
+                // Re-enable button
+                captureImageBtn.disabled = false;
+                captureImageBtn.innerHTML = '<i class="bi bi-camera"></i> Capture Image';
+            });
+        });
+        
+        // Save image to server
+        saveImageBtn.addEventListener('click', function() {
+            // Get the image data
+            const img = capturedImage.src;
+            if (!img) {
+                showStatus('No image to save', 'warning');
+                return;
+            }
+            
+            // Create a canvas to convert the image to blob
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas dimensions to match the image
+            canvas.width = capturedImage.naturalWidth;
+            canvas.height = capturedImage.naturalHeight;
+            
+            // Draw the image on the canvas
+            ctx.drawImage(capturedImage, 0, 0);
+            
+            // Convert canvas to blob
+            canvas.toBlob(function(blob) {
+                // Create form data
+                const formData = new FormData();
+                formData.append('image', blob, 'esp32_photo.jpg');
+                
+                // Use our QR code scanner API to process the image
+                fetch('{% url "inspections:scan_qr_code_api" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.url) {
+                        showStatus('QR code detected! Redirecting...', 'success');
+                        
+                        // Redirect to the QR code URL after a short delay
+                        setTimeout(() => {
+                            window.location.href = data.url;
+                        }, 1500);
+                    } else {
+                        showStatus('Image saved but no QR code detected', 'warning');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error saving image:', error);
+                    showStatus('Error saving image: ' + error.message, 'danger');
+                });
+            }, 'image/jpeg', 0.95);
+        });
+        
+        // Helper function to get CSRF token
+        function getCsrfToken() {
+            const csrfCookie = document.cookie.split(';')
+                .find(cookie => cookie.trim().startsWith('csrftoken='));
+            
+            if (csrfCookie) {
+                return csrfCookie.split('=')[1];
+            }
+            return '';
+        }
+    });
+</script>
+{% endblock %}

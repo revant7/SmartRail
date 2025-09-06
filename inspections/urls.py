@@ -1,8 +1,8 @@
 """
 URL patterns for inspections app.
 """
-from django.urls import path
-from . import views, streamlined_views, ai_views
+from django.urls import path, include
+from . import views, streamlined_views, ai_views, api_views, mock_esp32
 
 app_name = 'inspections'
 
@@ -54,4 +54,31 @@ urlpatterns = [
     path('api/streamlined/<uuid:inspection_id>/upload-photo/', streamlined_views.upload_streamlined_photo, name='upload_streamlined_photo'),
     path('api/streamlined/<uuid:inspection_id>/submit/', streamlined_views.submit_streamlined_inspection, name='submit_streamlined_inspection'),
     path('api/streamlined/process-qr/', streamlined_views.process_qr_code, name='process_qr_code'),
+    
+    # QR Code API endpoints
+    path('api/scan-qr/', api_views.scan_qr_code_api, name='scan_qr_code_api'),
+    path('api/trigger-esp32/', api_views.trigger_esp32_camera, name='trigger_esp32_camera'),
+    path('api/esp32-qr-scan/', api_views.scan_qr_from_esp32, name='scan_qr_from_esp32'),
+    path('api/esp32-qr-status/', api_views.get_esp32_qr_status, name='get_esp32_qr_status'),
+    path('api/direct-esp32-scan/', api_views.direct_esp32_scan, name='direct_esp32_scan'),
+    
+    # QR Scanner and ESP32 pages
+    path('esp32-tools/', api_views.esp32_landing_page, name='esp32_landing_page'),
+    path('qr-scanner/', api_views.qr_code_scanner_page, name='qr_code_scanner_page'),
+    path('streamlined/qr-scanner/', api_views.qr_code_scanner_page, name='qr_code_scanner_streamlined'),
+    
+    # Mock ESP32 Camera endpoints (for testing only)
+    path('mock-esp32/', include([
+        path('', mock_esp32.mock_esp32_ui, name='mock_esp32_ui'),
+        path('trigger/', mock_esp32.mock_esp32_trigger_endpoint, name='mock_esp32_trigger_endpoint'),
+        path('check-trigger/', mock_esp32.mock_esp32_check_trigger, name='mock_esp32_check_trigger'),
+        path('get-sample-qr/', mock_esp32.mock_esp32_get_sample_qr, name='mock_esp32_get_sample_qr'),
+    ])),
+    
+    # ESP32 camera integration endpoints
+    path('esp32/', include([
+        path('receive/', mock_esp32.esp32_receive_endpoint, name='esp32_receive_endpoint'),
+        path('capture/', mock_esp32.esp32_capture_endpoint, name='esp32_capture_endpoint'),
+        path('controller/', mock_esp32.esp32_controller_page, name='esp32_controller_page'),
+    ])),
 ]
